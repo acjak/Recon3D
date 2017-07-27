@@ -42,8 +42,8 @@ class main():
 
 	def readarrays(self):
 		self.fullarray = np.load(self.par['path'] + '/dataarray.npy')
-		self.alpha = np.load(self.par['path'] + '/alpha.npy')
-		self.beta = np.load(self.par['path'] + '/beta.npy')
+		self.mu = np.load(self.par['path'] + '/mu.npy')
+		self.gamma = np.load(self.par['path'] + '/gamma.npy')
 		self.omega = np.load(self.par['path'] + '/omega.npy')
 		# self.theta = np.load(self.par['path'] + '/theta.npy')
 
@@ -99,8 +99,8 @@ class main():
 		NB AS OF PRESENT THETA IS A NUMBER, NOT AN ARRAY. TO ALLOW FOR AN ARRAY
 		NEED TO THINK ABOUT THE LOOPING AND THE DIMENSIONS OF prop.
 		"""
-		slow = self.alpha
-		med = self.beta
+		slow = self.mu
+		med = self.gamma
 		fast = self.omega
 
 		grain_steps = self.par['grain_steps']
@@ -112,9 +112,9 @@ class main():
 		grain_dimstep = np.array(grain_dim) / np.array(grain_steps)
 		# grain_prop = np.zeros(grain_steps)
 
-		detx_size = np.shape(self.fullarray)[3]
+		dety_size = np.shape(self.fullarray)[3]
 		detz_size = np.shape(self.fullarray)[4]
-		detx_center = (detx_size - 0.) / 2  # should probably be -1 in stead of -0...
+		dety_center = (dety_size - 0.) / 2  # should probably be -1 in stead of -0...
 		detz_center = (detz_size - 0.) / 2.  # also here... but simulations used 0
 		lens = len(slow)
 		lenm = len(med)
@@ -125,7 +125,7 @@ class main():
 		mim = min(med)
 		prop = np.zeros((lens, lenm, lenf))
 
-		t_x = "None"
+		# t_x = "None"
 		if self.rank == 0:
 			print "Making forward projection..."
 
@@ -133,6 +133,7 @@ class main():
 		if self.rank == 0:
 			print "Forward projection done."
 
+		# Step through all the voxel in the reconstruction volume by z, x and y.
 		for iz in range(ista, isto):
 			if self.rank == 0:
 				done = 100 * (float(iz - ista) / (isto - ista))
@@ -140,48 +141,51 @@ class main():
 
 			for ix in range(grain_steps[0]):
 				timelist = []
-				timedata = []
+				# timedata = []
 
 				for iy in range(grain_steps[1]):
 					if self.rank == 0:
 						t_0 = time.clock()
 
+					# Get the center position vector of the voxel in the sample coordinate system.
 					grain_xyz[ix, iy, iz] = grain_pos + grain_dimstep *\
 						(np.array([ix, iy, iz]) - 0.5 * (np.array(grain_steps) - 1))
 
-					blah = np.zeros((4))
-					blah[:3] = grain_xyz[ix, iy, iz]
-					blah[3] = 1.
+					# Multiply the large rotation matrix with the position vector to get the diffraction spots on the detector.
+					xyz_d_f = np.matmul(T_s2d[0, 0, :], grain_xyz[ix, iy, iz])  # , grain_xyz[ix, iy, iz])
 
-					xyz_d_f = np.matmul(T_s2d[0, :, 0, 0], blah)  # , grain_xyz[ix, iy, iz])
-
-					detx_f = np.rint(xyz_d_f[:, 0] + detx_center).astype(int)
+					# Get the exact detector positions in the y/z plane.
+					dety_f = np.rint(xyz_d_f[:, 1] + dety_center).astype(int)
 					detz_f = np.rint(xyz_d_f[:, 2] + detz_center).astype(int)
+
 					# projections outside detector frame hit the outmost row or column
 					# should be OK assuming that the signal doesn't reach the very borders
-					detx_f[detx_f < 0] = 0
-					detx_f[detx_f >= detx_size] = detx_size - 1
+					dety_f[dety_f < 0] = 0
+					dety_f[dety_f >= dety_size] = dety_size - 1
 					detz_f[detz_f < 0] = 0
 					detz_f[detz_f >= detz_size] = detz_size - 1
 
-					prop = self.fullarray[:, :, range(lenf), detx_f, detz_f]
+					# Get the mosaicity maps for the given detector positions.
+					prop = self.fullarray[:, :, range(lenf), dety_f, detz_f]
 
-					cos = list(ndimage.measurements.center_of_mass(np.sum(prop, 2)))
+					# Sum all mosaicity maps along the omega dimension, resulting in a single mosaicity map.
+					# Make a center of mass calculation of that map.
+					com = list(ndimage.measurements.center_of_mass(np.sum(prop, 2)))
 
-					# print np.rint(cos[0]), np.rint(cos[1])
+					# Try to make a weight of the given voxel, i.e. a value of the
+					# likelihood that this voxel is inside the grain.
 					try:
 						grain_ang[ix, iy, iz, 2] = np.sum(prop) / len(np.where(prop != 0))
 						# grain_ang[ix, iy, iz, 2] = np.sum(
-						# 	prop, 2)[np.rint(cos[0]), np.rint(cos[1])] / np.sum(prop)
+						# 	prop, 2)[np.rint(com[0]), np.rint(com[1])] / np.sum(prop)
 					except IndexError:
 						pass
 
-					cos[0] = cos[0] * (mas - mis) / lens + mis
-					cos[1] = cos[1] * (mam - mim) / lenm + mim
+					mu = com[0] * (mas - mis) / lens + mis
+					gamma = com[1] * (mam - mim) / lenm + mim
 
-					grain_ang[ix, iy, iz, :2] = cos
-
-					# print grain_ang[ix, iy, iz, 2]
+					grain_ang[ix, iy, iz, 0] = mu
+					grain_ang[ix, iy, iz, 1] = gamma
 
 					if self.rank == 0:
 						t_8 = time.clock()
@@ -194,6 +198,53 @@ class main():
 		return grain_ang  # grain_xyz,grain_ang,grain_prop
 
 	def build_rotation_lookup_general(self):
+		"""
+
+		"""
+
+		mu = np.pi * self.mu / 180.
+		gam = np.pi * self.gamma / 180.
+		om = np.pi * self.omega / 180.
+
+		mu_mat, gam_mat, om_mat = np.meshgrid(mu, gam, om, indexing='ij')
+
+		Gamma = np.zeros((len(mu), len(gam), len(om), 3, 3))
+		Mu = np.zeros((len(mu), len(gam), len(om), 3, 3))
+		Omega = np.zeros((len(mu), len(gam), len(om), 3, 3))
+		Ryz = np.zeros((len(mu), len(gam), len(om), 3, 3))
+
+		Omega[:, :, :, 0, 0] = np.cos(om_mat)
+		Omega[:, :, :, 1, 1] = 1.
+		Omega[:, :, :, 0, 2] = np.sin(om_mat)
+		Omega[:, :, :, 2, 0] = -np.sin(om_mat)
+		Omega[:, :, :, 2, 2] = np.cos(om_mat)
+
+		Gamma[:, :, :, 0, 0] = 1.
+		Gamma[:, :, :, 1, 1] = np.cos(gam_mat)
+		Gamma[:, :, :, 1, 2] = -np.sin(gam_mat)
+		Gamma[:, :, :, 2, 1] = np.sin(gam_mat)
+		Gamma[:, :, :, 2, 2] = np.cos(gam_mat)
+
+		Mu[:, :, :, 0, 0] = np.cos(mu_mat)
+		Mu[:, :, :, 1, 1] = np.cos(mu_mat)
+		Mu[:, :, :, 0, 1] = -np.sin(mu_mat)
+		Mu[:, :, :, 1, 0] = np.sin(mu_mat)
+		Mu[:, :, :, 2, 2] = 1.
+
+		Ryz[:, :, :, 1, 1] = -1.
+		Ryz[:, :, :, 2, 2] = -1.
+
+		# if self.par['mode'] == "horizontal":
+		# 	pass
+		# elif self.par['mode'] == "vertical":
+		# 	pass
+		# else:
+		# 	print "ERROR: scattering geometry not defined"
+
+		T_s2d = self.par['M'] * np.matmul(Ryz, np.matmul(Mu, np.matmul(Gamma, Omega)))
+		return T_s2d
+
+	def build_rotation_lookup_general_old(self):
 		"""
 		Set up the rotation_lookup[theta,omega,phi_lo,phi_up] lookup table of
 		rotation matrices for each value in the theta, omega, phi_lo
@@ -209,7 +260,6 @@ class main():
 		xyz_up, xyz_lo, xyz_th should be the coordinates (in microns) of the focus
 		point on the rotation axis, eg yxz_up=[-40,0,0] in horizontal geometry.
 		"""
-
 		up = np.pi * self.alpha / 180.
 		lo = np.pi * self.beta / 180.
 		om = np.pi * self.omega / 180.
@@ -363,6 +413,7 @@ class main():
 	def outputfiles(self, grain_ang):
 		print "Saving grain_ang file..."
 		np.save(self.par['path'] + '/grain_ang.npy', grain_ang)
+
 
 if __name__ == "__main__":
 	if len(sys.argv) != 2:
