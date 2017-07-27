@@ -426,15 +426,15 @@ class GetEdfData(object):
 					sys.stdout.flush()
 
 				img0 = self.getImage(index_part[i], False)
-				imgsum = np.sum(img0, 1) / len(img0[0, :])
+				# imgsum = np.sum(img0, 1) / len(img0[0, :])
 
 				# Adjusting for gradient in image.
-				ran = np.array(range(len(imgsum)))
-				popt, pcov = self.fitLine(ran, imgsum)
-				fittedline = ran * popt[0] + popt[1]
-				fittedline = fittedline - fittedline[len(fittedline) / 2]
-				gradient = np.tile(fittedline, (len(img0[0, :]), 1)).transpose()
-				imgarray_part[i, :, :] = img0 - gradient
+				# ran = np.array(range(len(imgsum)))
+				# popt, pcov = self.fitLine(ran, imgsum)
+				# fittedline = ran * popt[0] + popt[1]
+				# fittedline = fittedline - fittedline[len(fittedline) / 2]
+				# gradient = np.tile(fittedline, (len(img0[0, :]), 1)).transpose()
+				imgarray_part[i, :, :] = img0  # - gradient
 
 			imgarray_part[0, 0, 0] = self.rank
 			if self.rank == 0:
