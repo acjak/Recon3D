@@ -57,8 +57,8 @@ class makematrix():
 		self.index_list = range(len(data.meta))
 		self.meta = data.meta
 
-		self.calcEta(data)
-		self.calcTheta(data)
+		self.calcGamma(data)
+		self.calcMu(data)
 		# self.calcEtaIndexList(data, eta)
 
 		self.allFiles(data, imgsize)
@@ -75,74 +75,69 @@ class makematrix():
 			os.makedirs(directory)
 		return directory
 
-	def calcEta(self, data):
-		for om in self.omega:
-			ind = np.where(self.meta[:, 2] == om)
-			a = self.meta[ind, 0][0]
+	def calcGamma(self, data):
+		# for om in self.omega:
+		om = self.omega[0]
+		ind = np.where(self.meta[:, 2] == om)
+		a = self.meta[ind, 0][0]
 
-			eta1 = (a - data.alpha0) / np.cos(np.radians(om))
-			self.eta = np.sort(list(set(eta1)))
-
-		self.etaindex = np.zeros((len(self.index_list)))
+		gamma1 = (a - data.alpha0) / np.cos(np.radians(om))
+		self.gamma = np.sort(list(set(gamma1)))
+		self.gammaindex = np.zeros((len(self.index_list)))
 
 		for ind in self.index_list:
 			om = self.meta[ind, 2]
 			a = self.meta[ind, 0] - data.alpha0
-			eta1 = a / np.cos(np.radians(om))
+			gamma1 = a / np.cos(np.radians(om))
 
-			etapos = np.where(self.eta == min(self.eta, key=lambda x: abs(x-eta1)))[0][0]
+			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
+			self.gammaindex[ind] = self.gamma[gammapos]
 
-			self.etaindex[ind] = self.eta[etapos]
-
-	def calcTheta(self, data):
-		self.thetafake = data.theta0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
-		self.thetaindex = np.zeros((len(self.index_list)))
+	def calcMu(self, data):
+		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
+		self.mufake = np.arange(-3 * 0.032, 4 * 0.032, 0.032)
+		self.muindex = np.zeros((len(self.index_list)))
 		for ind in self.index_list:
 			t = self.meta[ind, 4] - data.theta0
-			thetapos = np.where(self.thetafake == min(self.thetafake, key=lambda x: abs(x-t)))[0][0]
-			self.thetaindex[ind] = self.thetafake[thetapos]
-	# def calcEtaIndexList(self, data, eta):
-	# 	self.etaindex = np.zeros((len(self.index_list)))
-	#
-	# 	for ind in self.index_list:
-	# 		om = self.meta[ind, 2]
-	# 		a = self.meta[ind, 0] - data.alpha0
-	# 		eta1 = a / np.cos(np.radians(om))
-	#
-	# 		etapos = np.where(eta == min(eta, key=lambda x: abs(x-eta1)))[0][0]
-	#
-	# 		self.etaindex[ind] = eta[etapos]
+
+			mupos = np.where(self.mufake == min(self.mufake, key=lambda x: abs(x-t)))[0][0]
+
+			self.muindex[ind] = self.mufake[mupos]
 
 	def allFiles(self, data, imsiz):
 		# index_list = range(len(data.meta))
 		# met = data.meta
 
-		# theta = data.theta0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
+		# mu = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
 
 		with warnings.catch_warnings():
 			warnings.simplefilter("ignore")
 			imgarray = data.makeImgArray(self.index_list, 50, 'linetrace')
 
 		if self.rank == 0:
-			# lena = len(self.theta)
-			lena = len(self.thetafake)
-			lenb = len(self.eta)
+			# lena = len(self.mu)
+			lena = len(self.mufake)
+			lenb = len(self.gamma)
 			leno = len(self.omega)
 
 			bigarray = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 
 			for i, ind in enumerate(self.index_list):
-				a = np.where(self.thetafake == self.thetaindex[ind])  # theta
-				b = np.where(self.eta == self.etaindex[ind])  # roll
+				a = np.where(self.mufake == self.muindex[ind])  # mu
+				b = np.where(self.gamma == self.gammaindex[ind])  # roll
 				c = np.where(self.omega == self.meta[ind, 2])  # omega
-				# d = np.where(self.theta == met[ind, 4])
+				# d = np.where(self.mu == met[ind, 4])
+				# print a, b, c
+				if a == [0] and b == [1] and c == [10]:
+					print ind, self.data_files[ind]
 
-				bigarray[a, b, c, :, :] = imgarray[ind, :, :]
+				bigarray[a, b, c, :, :] = np.flipud(imgarray[ind, :, :])
 
+			### Make background subtraction
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
-			np.save(self.directory + '/roll.npy', self.eta)
-			np.save(self.directory + '/theta.npy', self.thetafake)
+			np.save(self.directory + '/gamma.npy', self.gamma)
+			np.save(self.directory + '/mu.npy', self.mufake + data.theta0)
 			np.save(self.directory + '/omega.npy', self.omega)
 
 			np.save(self.directory + '/dataarray.npy', bigarray)
