@@ -13,7 +13,7 @@ except ImportError:
 class main():
 	def __init__(self, inifile):
 		self.par = self.getparameters(inifile)
-
+		self.getTheta()
 		self.setup_mpi()
 
 		if self.rank == 0:
@@ -39,6 +39,13 @@ class main():
 	def getparameters(self, inifile):
 		checkinput = ini(inifile)
 		return checkinput.par
+
+	def getTheta(self):
+		hkl = np.array(self.par['hkl'])
+		wavelength = self.par['wavelength']
+		unit_cell = np.array(self.par['unit_cell'])
+		d = unit_cell[0] / np.sqrt(hkl[0]**2)
+		self.theta = np.degrees(np.sin(wavelength / (2 * d)))
 
 	def readarrays(self):
 		self.fullarray = np.load(self.par['path'] + '/dataarray.npy')
@@ -110,6 +117,7 @@ class main():
 		grain_xyz = np.zeros(grain_steps + [3])
 		grain_ang = np.zeros(grain_steps + [3])
 		grain_dimstep = np.array(grain_dim) / np.array(grain_steps)
+		mosaicitymap = np.zeros((grain_steps + [7] + [7]))
 		# grain_prop = np.zeros(grain_steps)
 
 		dety_size = np.shape(self.fullarray)[3]
@@ -152,11 +160,12 @@ class main():
 						(np.array([ix, iy, iz]) - 0.5 * (np.array(grain_steps) - 1))
 
 					# Multiply the large rotation matrix with the position vector to get the diffraction spots on the detector.
-					xyz_d_f = np.matmul(T_s2d[0, 0, :], grain_xyz[ix, iy, iz])  # , grain_xyz[ix, iy, iz])
-
+					xyz_d_f = np.matmul(T_s2d[:, :, :], grain_xyz[ix, iy, iz])  # , grain_xyz[ix, iy, iz])
+					# if self.rank == 0:
+					# 	print np.shape(xyz_d_f)
 					# Get the exact detector positions in the y/z plane.
-					dety_f = np.rint(xyz_d_f[:, 1] + dety_center).astype(int)
-					detz_f = np.rint(xyz_d_f[:, 2] + detz_center).astype(int)
+					dety_f = np.rint(xyz_d_f[:, :, :, 1] + dety_center).astype(int)
+					detz_f = np.rint(xyz_d_f[:, :, :, 2] + detz_center).astype(int)
 
 					# projections outside detector frame hit the outmost row or column
 					# should be OK assuming that the signal doesn't reach the very borders
@@ -172,6 +181,8 @@ class main():
 					# Make a center of mass calculation of that map.
 					com = list(ndimage.measurements.center_of_mass(np.sum(prop, 2)))
 
+					mosaicitymap[ix, iy, iz, :, :] = np.sum(prop, 2)
+
 					# Try to make a weight of the given voxel, i.e. a value of the
 					# likelihood that this voxel is inside the grain.
 					try:
@@ -181,6 +192,7 @@ class main():
 					except IndexError:
 						pass
 
+					# Translate coordinates into mu and gamma angles.
 					mu = com[0] * (mas - mis) / lens + mis
 					gamma = com[1] * (mam - mim) / lenm + mim
 
@@ -202,7 +214,8 @@ class main():
 
 		"""
 
-		mu = np.pi * self.mu / 180.
+		mu0 = (max(self.mu) - min(self.mu)) / 2
+		mu = np.pi * (self.mu - mu0 - self.theta) / 180.
 		gam = np.pi * self.gamma / 180.
 		om = np.pi * self.omega / 180.
 
