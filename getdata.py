@@ -131,7 +131,7 @@ class makematrix():
 				if a == [0] and b == [1] and c == [10]:
 					print ind, self.data_files[ind]
 
-				bigarray[a, b, c, :, :] = np.flipud(imgarray[ind, :, :])
+				bigarray[a, b, c, :, :] = imgarray[ind, :, :]
 
 			### Make background subtraction
 			# np.save(self.directory + '/alpha.npy', self.alpha)
