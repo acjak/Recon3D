@@ -18,14 +18,12 @@ Future versions will be able to do reconstruction based on strain datasets.
 
 Running Recon3D requires having Miniconda2 and Fable on your Panda2 account. To install the packages, run the script available [here](https://github.com/acjak/fable-install). If you get an error message and need to change a permission path, check [this tip](http://stackoverflow.com/questions/35246386/conda-command-not-found).
 
-Running parallelised code on Panda requires using *mpi4py*. The command to install it is *conda install mpi4py*
-
 ## Reading data from .edf files to a NumPy array
 
 The script getdata.py reads data from .edf files and outputs a NumPy array with the dimensions *tilt1*-steps x *tilt2*-steps x *omega*-steps x *img_xlen* x *img_ylen*, where *tilt1* and *tilt2* are the two top tilts in the LAB goniometer at ID06. *Omega* is the topo-tomo rotation stage. The command to create the array is the following:
 
 ```
-$ python getdata.py [datadir] [dataname] [bgdir] [bgname] [poi] [imgsize] [outputpath] [outputdirname] [phi_0] [chi_0]
+$ python getdata.py [datadir] [dataname] [bgdir] [bgname] [poi] [imgsize] [outputpath] [outputdirname]
 ```
 
 Arguments are the following:
@@ -40,13 +38,11 @@ Arguments are the following:
 | imgsize     | Size of region of interest. | 200,200 |
 | outputpath     | Path to put the output directory. | /analysis/output |
 | outputdirname     | Name of output dir. | exp1_array |
-| phi_0     | Initial phi (alpha) value | 0.765 |
-| chi_0     | Initial chi (beta) value | -3.35 |
 
-If MPI is available, the following command will run the script in 10 processes at the same time. This will vastly increase the speed. On Panda2, the recommended maximum number of getdata processes to run in parallel is 20.
+If MPI is available, the following command will run the script in 10 processes at the same time. This will vastly increase the speed.
 
 ```
-$ mpirun -n 10 python getdata.py [datadir] [dataname] [bgdir] [bgname] [poi] [imgsize] [outputpath] [outputdirname] [phi_0] [chi_0]
+$ mpirun -n 10 python getdata.py [datadir] [dataname] [bgdir] [bgname] [poi] [imgsize] [outputpath] [outputdirname]
 ```
 
 ## Running the reconstruction algorithm on a data set

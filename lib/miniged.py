@@ -31,7 +31,6 @@ import warnings
 import time
 import sys
 import scipy
-import matplotlib.pyplot as plt
 
 from os import listdir
 from os.path import isfile, join
@@ -81,7 +80,7 @@ class GetEdfData(object):
 
 		self.sampletitle = filename
 		self.path = path
-		#self.bg_path = bg_path
+		self.bg_path = bg_path
 		self.roi = roi
 		self.simulated = simulated
 
@@ -155,22 +154,6 @@ class GetEdfData(object):
 				self.bg_combined_full += bg_class.GetData(0).astype(np.int64)
 
 			self.bg_combined_full /= len(self.bg_files)
-
-			bckg = self.bg_combined
-			bckg_entire = self.bg_combined_full
-
-		# Check background images
-		#fig = plt.figure()
-		#a=fig.add_subplot(1,2,1)
-		#plt.imshow(bckg)
-		#a.set_title('Background ROI')
-		#b=fig.add_subplot(1,2,2)
-		#plt.imshow(bckg_entire)
-		#b.set_title('All background')
-		#plt.show()
-		np.save('bckg_roi.npy', bckg)
-		np.save('bckg_all.npy', bckg_entire)
-		#plt.savefig('Background_check.png')
 
 	def getIndexList(self):
 		file_with_path = self.path + '/' + self.data_files[0]
@@ -351,13 +334,11 @@ class GetEdfData(object):
 		roi = self.roi
 
 		if full:
-			im = (img.GetData(0).astype(np.int64)) #/ self.bg_combined_full
-			#im = (img.GetData(0).astype(np.int64)*300) / self.bg_combined_full
+			im = img.GetData(0).astype(np.int64) - self.bg_combined_full
 		else:
-			#im = (img.GetData(0).astype(np.int64)*300)[
-			im = (img.GetData(0).astype(np.int64))[
+			im = img.GetData(0).astype(np.int64)[
 				roi[2]:roi[3],
-				roi[0]:roi[1]] #/ self.bg_combined
+				roi[0]:roi[1]] - self.bg_combined
 
 		im = self.cleanImage(im)
 
@@ -432,8 +413,8 @@ class GetEdfData(object):
 		def addToArray(index_part):
 			if self.rank == 0:
 				print "Loading array from data files..."
-			point = len(index_part)# / 100
-			incr = len(index_part)# / 100
+			point = len(index_part) / 100
+			incr = len(index_part) / 100
 			imgarray_part = np.zeros((len(index_part), len(img[:, 0]), len(img[0, :])))
 			for i in range(len(index_part)):
 				if self.rank == 0 and i % (5 * point) == 0:
@@ -445,15 +426,15 @@ class GetEdfData(object):
 					sys.stdout.flush()
 
 				img0 = self.getImage(index_part[i], False)
-				imgsum = np.sum(img0, 1) / len(img0[0, :])
+				# imgsum = np.sum(img0, 1) / len(img0[0, :])
 
 				# Adjusting for gradient in image.
-				ran = np.array(range(len(imgsum)))
-				popt, pcov = self.fitLine(ran, imgsum)
-				fittedline = ran * popt[0] + popt[1]
-				fittedline = fittedline - fittedline[len(fittedline) / 2]
-				gradient = np.tile(fittedline, (len(img0[0, :]), 1)).transpose()
-				imgarray_part[i, :, :] = img0 - gradient
+				# ran = np.array(range(len(imgsum)))
+				# popt, pcov = self.fitLine(ran, imgsum)
+				# fittedline = ran * popt[0] + popt[1]
+				# fittedline = fittedline - fittedline[len(fittedline) / 2]
+				# gradient = np.tile(fittedline, (len(img0[0, :]), 1)).transpose()
+				imgarray_part[i, :, :] = img0  # - gradient
 
 			imgarray_part[0, 0, 0] = self.rank
 			if self.rank == 0:

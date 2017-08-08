@@ -1,13 +1,9 @@
-# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625
-
-from lib.miniged import GetEdfData	# Read EDF files and plot background
+from lib.miniged import GetEdfData
 import sys
 import time
 import os
 import warnings
 import numpy as np
-import matplotlib.pyplot as plt
-from find_nearest import find_nearest, find_nearest_idx
 
 try:
 	from mpi4py import MPI
@@ -18,21 +14,20 @@ except ImportError:
 Inputs:
 Directory of data
 Name of data files
+Directory of background files
+Name of background files
 Point of interest
 Image size
 Output path
 Name of new output directory to make
-Initial phi values
-Initial chi value
 '''
 
 
 class makematrix():
 	def __init__(
-		self, datadir, dataname,
-		#dataname, bgpath, bgfilename,
+		self, datadir,
+		dataname, bgpath, bgfilename,
 		poi, imgsize, outputpath, outputdir,
-		phi_0, chi_0,
 		sim=False):
 
 		try:
@@ -56,16 +51,14 @@ class makematrix():
 			int(int(poi[1]) - int(imgsize[1]) / 2),
 			int(int(poi[1]) + int(imgsize[1]) / 2)]
 
-		#data = GetEdfData(datadir, dataname, bgpath, bgfilename, roi, sim)
-		data = GetEdfData(datadir, dataname, roi, sim)
-
+		data = GetEdfData(datadir, dataname, bgpath, bgfilename, roi, sim)
 		self.alpha, self.beta, self.omega, self.theta = data.getMetaValues()
 
 		self.index_list = range(len(data.meta))
 		self.meta = data.meta
-		self.phi = phi_0
-		self.chi = chi_0
 
+		self.calcGamma(data)
+		self.calcMu(data)
 		# self.calcEtaIndexList(data, eta)
 
 		self.allFiles(data, imgsize)
@@ -82,90 +75,86 @@ class makematrix():
 			os.makedirs(directory)
 		return directory
 
+	def calcGamma(self, data):
+		# for om in self.omega:
+		om = self.omega[0]
+		ind = np.where(self.meta[:, 2] == om)
+		a = self.meta[ind, 0][0]
+
+		gamma1 = (a - data.alpha0) / np.cos(np.radians(om))
+		self.gamma = np.sort(list(set(gamma1)))
+		self.gammaindex = np.zeros((len(self.index_list)))
+
+		for ind in self.index_list:
+			om = self.meta[ind, 2]
+			a = self.meta[ind, 0] - data.alpha0
+			gamma1 = a / np.cos(np.radians(om))
+
+			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
+			self.gammaindex[ind] = self.gamma[gammapos]
+
+	def calcMu(self, data):
+		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
+		self.mufake = np.arange(-3 * 0.032, 4 * 0.032, 0.032)
+		self.muindex = np.zeros((len(self.index_list)))
+		for ind in self.index_list:
+			t = self.meta[ind, 4] - data.theta0
+
+			mupos = np.where(self.mufake == min(self.mufake, key=lambda x: abs(x-t)))[0][0]
+
+			self.muindex[ind] = self.mufake[mupos]
+
 	def allFiles(self, data, imsiz):
 		# index_list = range(len(data.meta))
 		# met = data.meta
 
-		# theta = data.theta0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
+		# mu = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
 
 		with warnings.catch_warnings():
 			warnings.simplefilter("ignore")
 			imgarray = data.makeImgArray(self.index_list, 50, 'linetrace')
 
 		if self.rank == 0:
-
-			# If we don't need to bin the angular values
-			lena = len(self.alpha)
-			lenb = len(self.beta)
+			# lena = len(self.mu)
+			lena = len(self.mufake)
+			lenb = len(self.gamma)
 			leno = len(self.omega)
-			lent = len(self.theta)
 
-			# Reduce alpha and beta to a single index_list
-			idx_list = np.zeros(len(self.meta))
-			for j in range(len(self.meta)):
-				alp = float(self.meta[j,0])
-				omg = float(self.meta[j,2])
-				phi_0 = float(self.phi)
-				chi_0 = float(self.chi)
-				idx_list[j] = int(round((alp - phi_0)/(np.cos(np.deg2rad(omg))*(0.117/2))))
+			bigarray = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 
-			num_int = len(set(idx_list))	# Number of considered alpha, beta
-											# intervals
-			idx_values = sorted(set(idx_list))	# Values of the indices
-
-			bigarray = np.zeros((num_int, lent, leno, int(imsiz[0]), int(imsiz[1])), dtype=np.uint16)
-			Image_prop = np.zeros([len(self.index_list), 4])
-
-			#AA = np.empty([len(self.index_list), 5])
 			for i, ind in enumerate(self.index_list):
-				a = np.where(self.alpha == self.meta[int(ind),0])  	# Rock
-				b = np.where(self.beta == self.meta[int(ind),1])  	# Roll
-				c = np.where(self.omega == self.meta[int(ind),2])  	# Omega
-				d = np.where(self.theta == self.meta[int(ind),4])	# Theta
-				idx_rescaled = (self.meta[int(ind),0] - phi_0) / (np.cos(np.deg2rad(self.meta[int(ind),2])) * (0.117/2)) + ((num_int - 1) / 2)
-				e = (idx_rescaled - ((num_int - 1) / 2)) * 0.032
+				a = np.where(self.mufake == self.muindex[ind])  # mu
+				b = np.where(self.gamma == self.gammaindex[ind])  # roll
+				c = np.where(self.omega == self.meta[ind, 2])  # omega
+				# d = np.where(self.mu == met[ind, 4])
+				# print a, b, c
+				if a == [0] and b == [1] and c == [10]:
+					print ind, self.data_files[ind]
 
-				print round(idx_rescaled), np.deg2rad(self.meta[int(ind),2])
+				bigarray[a, b, c, :, :] = imgarray[ind, :, :]
 
-				# Can we effectively reconstruct chi and phi from idx_rescaled?
-				#ph = phi_0 + ((idx_rescaled - 3)*np.cos(np.deg2rad(self.meta[int(ind),2]))*0.032)
-				#ch = chi_0 + ((idx_rescaled - 3)*(np.tan(np.deg2rad(self.meta[int(ind),2]))*0.032))
-
-				#AA[ind] = [self.meta[int(ind),0], self.meta[int(ind),1],self.meta[int(ind),2], idx_rescaled, self.meta[int(ind),4]]
-
-				bigarray[[int(round(idx_rescaled))], d[0], c[0], :, :] = imgarray[ind, :, :]
-
-				# List the properties of the images and write them to a txt
-				Image_prop[int(ind), 0] = int(ind)	# Image number
-				Image_prop[int(ind), 1] = int(round(idx_rescaled)) # Gamma index
-				Image_prop[int(ind), 2] = d[0]	# Theta
-				Image_prop[int(ind), 3] = c[0]	# Omega
-
-			print 'Check that the number of (phi, chi) steps is', num_int
-
-			np.save(self.directory + '/alpha.npy', self.alpha)
-			np.save(self.directory + '/beta.npy', self.beta)
-			np.save(self.directory + '/theta.npy', self.theta)
+			### Make background subtraction
+			# np.save(self.directory + '/alpha.npy', self.alpha)
+			# np.save(self.directory + '/beta.npy', self.beta)
+			np.save(self.directory + '/gamma.npy', self.gamma)
+			np.save(self.directory + '/mu.npy', self.mufake + data.theta0)
 			np.save(self.directory + '/omega.npy', self.omega)
-			np.save(self.directory + '/gamma.npy', [((b - ((num_int - 1)/2))*0.032) for b in range(num_int)])
-			# The gamma angle is a linear combination of alpha and beta
-			np.save(self.directory + '/all_data.npy', self.meta)
+
 			np.save(self.directory + '/dataarray.npy', bigarray)
-			#np.savetxt(self.directory + '/AA.txt', AA)
-			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
+
 
 if __name__ == "__main__":
-	if len(sys.argv) != 8:
-		if len(sys.argv) != 9:
-			print "Not enough (or too many) input parameters. Data input should be:\n\
+	if len(sys.argv) != 9:
+		if len(sys.argv) != 10:
+			print "Not enough input parameters. Data input should be:\n\
 	Directory of data\n\
 	Name of data files\n\
+	Directory of background files\n\
+	Name of background files\n\
 	Point of interest\n\
 	Image size\n\
 	Output path\n\
 	Name of new output directory to make\n\
-	Initial phi value\n\
-	Initial chi value\n\
 		"
 		else:
 			mm = makematrix(
@@ -176,9 +165,8 @@ if __name__ == "__main__":
 				sys.argv[5],
 				sys.argv[6],
 				sys.argv[7],
-				sys.argv[8])
-				#sys.argv[9],
-				#sys.argv[10])
+				sys.argv[8],
+				sys.argv[9])
 	else:
 		mm = makematrix(
 			sys.argv[1],
@@ -188,6 +176,4 @@ if __name__ == "__main__":
 			sys.argv[5],
 			sys.argv[6],
 			sys.argv[7],
-			sys.argv[8])
-			#sys.argv[10],
-			#sys.argv[11])
+			sys.argv[8],)
