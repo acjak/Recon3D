@@ -1,3 +1,6 @@
+# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/sundaynight topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test 0.785 -3.319
+# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625
+
 from lib.miniged import GetEdfData
 import sys
 import time
@@ -14,20 +17,20 @@ except ImportError:
 Inputs:
 Directory of data
 Name of data files
-Directory of background files
-Name of background files
 Point of interest
 Image size
 Output path
 Name of new output directory to make
+Initial phi value
+Initial chi value
 '''
 
 
 class makematrix():
 	def __init__(
-		self, datadir,
-		dataname, bgpath, bgfilename,
+		self, datadir, dataname,
 		poi, imgsize, outputpath, outputdir,
+		phi_0, chi_0,
 		sim=False):
 
 		try:
@@ -51,7 +54,7 @@ class makematrix():
 			int(int(poi[1]) - int(imgsize[1]) / 2),
 			int(int(poi[1]) + int(imgsize[1]) / 2)]
 
-		data = GetEdfData(datadir, dataname, bgpath, bgfilename, roi, sim)
+		data = GetEdfData(datadir, dataname, roi, sim)
 		self.alpha, self.beta, self.omega, self.theta = data.getMetaValues()
 
 		self.index_list = range(len(data.meta))
@@ -145,28 +148,16 @@ class makematrix():
 
 if __name__ == "__main__":
 	if len(sys.argv) != 9:
-		if len(sys.argv) != 10:
-			print "Not enough input parameters. Data input should be:\n\
-	Directory of data\n\
-	Name of data files\n\
-	Directory of background files\n\
-	Name of background files\n\
-	Point of interest\n\
-	Image size\n\
-	Output path\n\
-	Name of new output directory to make\n\
-		"
-		else:
-			mm = makematrix(
-				sys.argv[1],
-				sys.argv[2],
-				sys.argv[3],
-				sys.argv[4],
-				sys.argv[5],
-				sys.argv[6],
-				sys.argv[7],
-				sys.argv[8],
-				sys.argv[9])
+		print "Wrong number of input parameters. Data input should be:\n\
+	        Directory of data\n\
+	        Name of data files\n\
+	        Point of interest\n\
+	        Image size\n\
+	        Output path\n\
+	        Name of new output directory to make\n\
+            Initial phi values\n\
+            Initial chi value\n\
+		    "
 	else:
 		mm = makematrix(
 			sys.argv[1],
@@ -176,4 +167,4 @@ if __name__ == "__main__":
 			sys.argv[5],
 			sys.argv[6],
 			sys.argv[7],
-			sys.argv[8],)
+			sys.argv[8])
