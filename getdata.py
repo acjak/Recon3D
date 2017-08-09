@@ -7,6 +7,7 @@ import time
 import os
 import warnings
 import numpy as np
+import matplotlib.pyplot as plt
 
 try:
 	from mpi4py import MPI
@@ -137,6 +138,41 @@ class makematrix():
 				bigarray[a, b, c, :, :] = imgarray[ind, :, :]
 
 			### Make background subtraction
+
+			bigarray_clean = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			# For each projection, find the two images with the lowest integrated
+			# intensity. Images are then cleaned by subtracting the average of
+			# the two
+			for k in range(leno):
+				I_int = np.zeros([lena, lenb])
+				for i in range(lena):
+					for j in range(lenb):
+						I_int[i,j] = sum(sum(bigarray[i,j,k,:,:]))
+
+				min_I = np.amin(I_int)
+				min2_I = np.amin(np.array(I_int)[I_int != np.amin(I_int)])
+				IM_min_1 = np.zeros((int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+				IM_min_2 = np.zeros((int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+				IM_min_avg = np.zeros((int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+
+				for i in range(lena):
+					for j in range(lenb):
+						if sum(sum(bigarray[i,j,k,:,:])) == min_I:
+							IM_min_1[:,:] = bigarray[i,j,k,:,:]
+						elif sum(sum(bigarray[i,j,k,:,:])) == min2_I:
+							IM_min_2[:,:] = bigarray[i,j,k,:,:]
+
+				IM_min_avg = 0.5 * (IM_min_1 + IM_min_2)
+
+				# Subtract the average from the relative images
+				for i in range(lena):
+					for j in range(lenb):
+						bigarray_clean[i,j,k,:,:] = bigarray[i,j,k,:,:] - IM_min_avg[:,:]
+						for aa in range(bigarray_clean.shape[3]):
+							for bb in range(bigarray_clean.shape[4]):
+								if bigarray_clean[i,j,k,aa,bb] < 0:
+									bigarray_clean[i,j,k,aa,bb] = 0
+
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
 			np.save(self.directory + '/gamma.npy', self.gamma)
@@ -144,7 +180,7 @@ class makematrix():
 			np.save(self.directory + '/omega.npy', self.omega)
 
 			np.save(self.directory + '/dataarray.npy', bigarray)
-
+			np.save(self.directory + '/dataarray_clean.npy', bigarray_clean)
 
 if __name__ == "__main__":
 	if len(sys.argv) != 9:
