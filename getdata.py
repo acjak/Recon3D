@@ -124,6 +124,7 @@ class makematrix():
 			leno = len(self.omega)
 
 			bigarray = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			Image_prop = np.zeros([len(self.index_list), 4])
 
 			for i, ind in enumerate(self.index_list):
 				a = np.where(self.mufake == self.muindex[ind])  # mu
@@ -134,10 +135,19 @@ class makematrix():
 				if a == [0] and b == [1] and c == [10]:
 					print ind, self.data_files[ind]
 
+				# Store the image properties
+				Image_prop[int(ind), 0] = int(ind)	# Image number
+				Image_prop[int(ind), 1] = a[0] # Gamma index
+				Image_prop[int(ind), 2] = b[0]	# Theta
+				Image_prop[int(ind), 3] = c[0]	# Omega
+
 				bigarray[a, b, c, :, :] = imgarray[ind, :, :]
+
+			print "Raw data stored."
 
 			### Make background subtraction
 			bigarray_clean = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0]), leno])
 			# For each projection, find the two images with the lowest integrated
 			# intensity. Images are then cleaned by subtracting the average of
 			# the two
@@ -147,11 +157,14 @@ class makematrix():
 					for j in range(lenb):
 						I_int[i,j] = sum(sum(bigarray[i,j,k,:,:]))
 
+				# Remove zeros from I_int
+				I_int = I_int[I_int != 0]
+
 				min_I = np.amin(I_int)
 				min2_I = np.amin(np.array(I_int)[I_int != np.amin(I_int)])
 				IM_min_1 = np.zeros([int(imsiz[1]), int(imsiz[0])])
 				IM_min_2 = np.zeros([int(imsiz[1]), int(imsiz[0])])
-				IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0])])
+				#IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0])])
 
 				for i in range(lena):
 					for j in range(lenb):
@@ -159,16 +172,20 @@ class makematrix():
 							IM_min_1[:,:] = bigarray[i,j,k,:,:]
 						elif sum(sum(bigarray[i,j,k,:,:])) == min2_I:
 							IM_min_2[:,:] = bigarray[i,j,k,:,:]
-						# Average cleaning images
-						IM_min_avg[:,:] = 0.5 * (IM_min_1[:,:] + IM_min_2[:,:])
-						# Subtract the average from the relative images
-						for aa in range(IM_min_1.shape[0]):
-							for bb in range(IM_min_1.shape[1]):
-								bigarray_clean[i,j,k,aa,bb] = bigarray[i,j,k,aa,bb] - IM_min_avg[aa,bb]
+
+				# Average cleaning images
+				IM_min_avg[:,:,k] = 0.5 * (IM_min_1[:,:] + IM_min_2[:,:])
+
+				# Subtract the average from the relative images
+				for i in range(lena):
+					for j in range(lenb):
+						bigarray_clean[i,j,k,:,:] = bigarray[i,j,k,:,:] - IM_min_avg[:,:,k]
 
 			# Set negative values to zero; take care of hot pixels
 			bigarray_clean[bigarray_clean < 0] = 0
 			bigarray_clean[bigarray_clean > 6E04] = 0
+
+			print "Raw data cleaned."
 
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
@@ -177,20 +194,25 @@ class makematrix():
 			np.save(self.directory + '/omega.npy', self.omega)
 
 			np.save(self.directory + '/dataarray.npy', bigarray)
+			del bigarray	# To avoid memory issues
+			np.save(self.directory + '/cleaning_img.npy', IM_min_avg)
 			np.save(self.directory + '/dataarray_clean.npy', bigarray_clean)
+			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
+
+			print "Data saved."
 
 if __name__ == "__main__":
 	if len(sys.argv) != 9:
 		print "Wrong number of input parameters. Data input should be:\n\
-	        Directory of data\n\
-	        Name of data files\n\
-	        Point of interest\n\
-	        Image size\n\
-	        Output path\n\
-	        Name of new output directory to make\n\
-            Initial phi values\n\
-            Initial chi value\n\
-		    "
+			Directory of data\n\
+			Name of data files\n\
+			Point of interest\n\
+			Image size\n\
+			Output path\n\
+			Name of new output directory to make\n\
+			Initial phi values\n\
+			Initial chi value\n\
+			"
 	else:
 		mm = makematrix(
 			sys.argv[1],
