@@ -185,6 +185,18 @@ class makematrix():
 			bigarray_clean[bigarray_clean < 0] = 0
 			bigarray_clean[bigarray_clean > 6E04] = 0
 
+			# Normalize images using the mean intensities at different projections
+			bigarray_clean_norm = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			I_int_proj = np.zeros([leno,2])
+			for oo in range(leno):
+				I_int_proj[oo,0] = oo
+				I_int_proj[oo,1] = np.average(bigarray_clean[:,:,oo,:,:])
+
+			I_int_max = max(I_int_proj[1])
+			print I_int_max
+			for oo in range(leno):
+				bigarray_clean_norm[:,:,oo,:,:] = np.divide(np.multiply(bigarray_clean[:,:,oo,:,:], I_int_max), I_int_proj[oo,1])
+
 			print "Raw data cleaned."
 
 			# np.save(self.directory + '/alpha.npy', self.alpha)
@@ -196,7 +208,7 @@ class makematrix():
 			np.save(self.directory + '/dataarray.npy', bigarray)
 			del bigarray	# To avoid memory issues
 			np.save(self.directory + '/cleaning_img.npy', IM_min_avg)
-			np.save(self.directory + '/dataarray_clean.npy', bigarray_clean)
+			np.save(self.directory + '/dataarray_clean_norm.npy', bigarray_clean)
 			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
 
 			print "Data saved."
