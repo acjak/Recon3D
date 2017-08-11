@@ -191,11 +191,11 @@ class makematrix():
 			I_int_proj = np.zeros([leno,2])
 			for oo in range(leno):
 				I_int_proj[oo,0] = oo
-				I_int_proj[oo,1] = np.average(bigarray_clean[:,:,oo,:,:])
+				I_int_proj[oo,1] = np.mean(bigarray_clean[:,:,oo,:,:])
 
 			I_int_max = max(I_int_proj[1])
 			for oo in range(leno):
-				bigarray_clean_norm[:,:,oo,:,:] = np.divide(np.multiply(bigarray_clean[:,:,oo,:,:], I_int_max), I_int_proj[oo,1])
+				bigarray_clean_norm[:,:,oo,:,:] = bigarray_clean[:,:,oo,:,:] * I_int_max / I_int_proj[oo,1]
 
 			print "Raw data cleaned."
 
@@ -207,7 +207,7 @@ class makematrix():
 			# Start by subtracting the mean
 			for aa in range(lena):
 				for bb in range(lenb):
-					for cc in range(lenc):
+					for cc in range(leno):
 						bigarray_clean_norm_2[aa,bb,cc,:,:] = bigarray_clean[aa,bb,cc,:,:] - int(np.mean(bigarray_clean[aa,bb,cc,:,:]))
 
 			bigarray_clean_norm_bin = bigarray_clean_norm_2
@@ -222,7 +222,7 @@ class makematrix():
 			np.save(self.directory + '/dataarray.npy', bigarray)
 			del bigarray	# To avoid memory issues
 			np.save(self.directory + '/cleaning_img.npy', IM_min_avg)
-			np.save(self.directory + '/dataarray_clean_norm.npy', bigarray_clean_norm_2)
+			np.save(self.directory + '/dataarray_clean_norm.npy', bigarray_clean_norm)
 			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
 
 			print "Data saved."
