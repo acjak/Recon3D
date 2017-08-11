@@ -8,6 +8,7 @@ import os
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
+import mahotas as mh
 
 try:
 	from mpi4py import MPI
@@ -193,11 +194,24 @@ class makematrix():
 				I_int_proj[oo,1] = np.average(bigarray_clean[:,:,oo,:,:])
 
 			I_int_max = max(I_int_proj[1])
-			print I_int_max
 			for oo in range(leno):
 				bigarray_clean_norm[:,:,oo,:,:] = np.divide(np.multiply(bigarray_clean[:,:,oo,:,:], I_int_max), I_int_proj[oo,1])
 
 			print "Raw data cleaned."
+
+			### Isolate regions with diffraction signal
+			# Array of images cleaned by the mean
+			bigarray_clean_norm_2 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			# Binarized version
+			bigarray_clean_norm_bin = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			# Start by subtracting the mean
+			for aa in range(lena):
+				for bb in range(lenb):
+					for cc in range(lenc):
+						bigarray_clean_norm_2[aa,bb,cc,:,:] = bigarray_clean[aa,bb,cc,:,:] - int(np.mean(bigarray_clean[aa,bb,cc,:,:]))
+
+			bigarray_clean_norm_bin = bigarray_clean_norm_2
+			bigarray_clean_norm_bin[bigarray_clean_norm_bin > 0] = 1
 
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
@@ -208,7 +222,7 @@ class makematrix():
 			np.save(self.directory + '/dataarray.npy', bigarray)
 			del bigarray	# To avoid memory issues
 			np.save(self.directory + '/cleaning_img.npy', IM_min_avg)
-			np.save(self.directory + '/dataarray_clean_norm.npy', bigarray_clean)
+			np.save(self.directory + '/dataarray_clean_norm.npy', bigarray_clean_norm_2)
 			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
 
 			print "Data saved."
