@@ -25,14 +25,16 @@ Output path
 Name of new output directory to make
 Initial phi value
 Initial chi value
+Angular step
+Number of angular steps
 '''
-
 
 class makematrix():
 	def __init__(
 		self, datadir, dataname,
 		poi, imgsize, outputpath, outputdir,
 		phi_0, chi_0,
+		ang_step, n_ang_steps,
 		sim=False):
 
 		try:
@@ -45,6 +47,8 @@ class makematrix():
 
 		imgsize = imgsize.split(',')
 		poi = poi.split(',')
+		ang_step = ang_step.split(',')
+		n_ang_steps = n_ang_steps.split(',')
 
 		if self.rank == 0:
 			start = time.time()
@@ -63,7 +67,7 @@ class makematrix():
 		self.meta = data.meta
 
 		self.calcGamma(data)
-		self.calcMu(data)
+		self.calcMu(data, ang_step, n_ang_steps)
 		# self.calcEtaIndexList(data, eta)
 
 		self.allFiles(data, imgsize)
@@ -97,9 +101,9 @@ class makematrix():
 			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
 			self.gammaindex[ind] = self.gamma[gammapos]
 
-	def calcMu(self, data):
+	def calcMu(self, data, ang_step, n_ang_steps):
 		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
-		self.mufake = np.arange(-3 * 0.032, 4 * 0.032, 0.032)
+		self.mufake = np.arange( - int(np.floor(float(n_ang_steps[0])/2)) * float(ang_step[0]), int(np.ceil(float(n_ang_steps[0])/2)) * float(ang_step[0]), float(ang_step[0]) )
 		self.muindex = np.zeros((len(self.index_list)))
 		for ind in self.index_list:
 			t = self.meta[ind, 4] - data.theta0
@@ -234,7 +238,7 @@ class makematrix():
 			print "Data saved."
 
 if __name__ == "__main__":
-	if len(sys.argv) != 9:
+	if len(sys.argv) != 11:
 		print "Wrong number of input parameters. Data input should be:\n\
 			Directory of data\n\
 			Name of data files\n\
@@ -244,6 +248,8 @@ if __name__ == "__main__":
 			Name of new output directory to make\n\
 			Initial phi values\n\
 			Initial chi value\n\
+			Angular step\n\
+			Number of angular steps\n\
 			"
 	else:
 		mm = makematrix(
@@ -254,4 +260,6 @@ if __name__ == "__main__":
 			sys.argv[5],
 			sys.argv[6],
 			sys.argv[7],
-			sys.argv[8])
+			sys.argv[8],
+			sys.argv[9],
+			sys.argv[10])
