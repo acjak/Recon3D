@@ -148,10 +148,13 @@ class makematrix():
 
 			### Make background subtraction
 			bigarray_clean = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			bigarray_clean_2 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0]), leno])
+			mean_proj = np.zeros([leno,2])
 			# For each projection, find the two images with the lowest integrated
 			# intensity. Images are then cleaned by subtracting the average of
-			# the two
+			# the two. Then divide the result by the mean value for a certain
+			# projection (this to take into account the sample rotation)
 			for k in range(leno):
 				I_int = np.zeros([lena, lenb])
 				for i in range(lena):
@@ -186,32 +189,35 @@ class makematrix():
 			bigarray_clean[bigarray_clean < 0] = 0
 			bigarray_clean[bigarray_clean > 6E04] = 0
 
-			# Normalize images using the mean intensities at different projections
-			bigarray_clean_norm = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
-			I_int_proj = np.zeros([leno,2])
-			for oo in range(leno):
-				I_int_proj[oo,0] = oo
-				I_int_proj[oo,1] = np.mean(bigarray_clean[:,:,oo,:,:])
+			for k in range(leno):
+				mean_proj[k,0] = k
+				sum_img = np.zeros([bigarray.shape[3], bigarray.shape[4]])
+				for ii in range(bigarray.shape[3]):
+					for jj in range(bigarray.shape[4]):
+						sum_img[ii,jj] = np.sum(bigarray_clean[:,:,k,ii,jj])
+				mean_proj[k,1] = np.mean(sum_img) / (lena*lenb)
+			mean_max = max(mean_proj[:,1])
 
-			I_int_max = max(I_int_proj[1])
-			for oo in range(leno):
-				bigarray_clean_norm[:,:,oo,:,:] = bigarray_clean[:,:,oo,:,:] * I_int_max / I_int_proj[oo,1]
-
+			# Normalize by the mean
+			for k in range(leno):
+				bigarray_clean_2[:,:,k,:,:] = bigarray_clean[:,:,k,:,:] / mean_proj[k,1] * mean_max
 			print "Raw data cleaned."
 
 			### Isolate regions with diffraction signal
+			#
+
 			# Array of images cleaned by the mean
 			bigarray_clean_norm_2 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			# Binarized version
-			bigarray_clean_norm_bin = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			#bigarray_clean_norm_bin = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			# Start by subtracting the mean
-			for aa in range(lena):
-				for bb in range(lenb):
-					for cc in range(leno):
-						bigarray_clean_norm_2[aa,bb,cc,:,:] = bigarray_clean[aa,bb,cc,:,:] - int(np.mean(bigarray_clean[aa,bb,cc,:,:]))
+			#for aa in range(lena):
+				#for bb in range(lenb):
+					#for cc in range(leno):
+						#bigarray_clean_norm_2[aa,bb,cc,:,:] = bigarray_clean[aa,bb,cc,:,:] - int(np.mean(bigarray_clean[aa,bb,cc,:,:]))
 
-			bigarray_clean_norm_bin = bigarray_clean_norm_2
-			bigarray_clean_norm_bin[bigarray_clean_norm_bin > 0] = 1
+			#bigarray_clean_norm_bin = bigarray_clean_norm_2
+			#bigarray_clean_norm_bin[bigarray_clean_norm_bin > 0] = 1
 
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
@@ -222,7 +228,7 @@ class makematrix():
 			np.save(self.directory + '/dataarray.npy', bigarray)
 			del bigarray	# To avoid memory issues
 			np.save(self.directory + '/cleaning_img.npy', IM_min_avg)
-			np.save(self.directory + '/dataarray_clean_norm.npy', bigarray_clean_norm)
+			np.save(self.directory + '/dataarray_clean.npy', bigarray_clean_2)
 			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
 
 			print "Data saved."
