@@ -108,6 +108,12 @@ class makematrix():
 
 			self.muindex[ind] = self.mufake[mupos]
 
+	# Function to rebin the values in a matrix and assign to each bin the
+	# average intensity
+	def rebin(a, shape):
+    	sh = shape[0],a.shape[0]//shape[0],shape[1],a.shape[1]//shape[1]
+    return a.reshape(sh).mean(-1).mean(1)
+
 	def allFiles(self, data, imsiz):
 		# index_list = range(len(data.meta))
 		# met = data.meta
