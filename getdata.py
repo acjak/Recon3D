@@ -8,7 +8,6 @@ import os
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
-import mahotas as mh
 
 try:
 	from mpi4py import MPI
@@ -27,7 +26,10 @@ Initial phi value
 Initial chi value
 Angular step
 Number of angular steps
+Size frame background subtraction
 '''
+
+# Note: the standard frame size for the background subtraction is 20 pixels
 
 class makematrix():
 	def __init__(
@@ -35,6 +37,7 @@ class makematrix():
 		poi, imgsize, outputpath, outputdir,
 		phi_0, chi_0,
 		ang_step, n_ang_steps,
+		sz_fr,
 		sim=False):
 
 		try:
@@ -49,6 +52,7 @@ class makematrix():
 		poi = poi.split(',')
 		ang_step = ang_step.split(',')
 		n_ang_steps = n_ang_steps.split(',')
+		sz_fr = sz_fr.split(',')
 
 		if self.rank == 0:
 			start = time.time()
@@ -70,7 +74,7 @@ class makematrix():
 		self.calcMu(data, ang_step, n_ang_steps)
 		# self.calcEtaIndexList(data, eta)
 
-		self.allFiles(data, imgsize)
+		self.allFiles(data, imgsize, sz_fr)
 
 		if self.rank == 0:
 			stop = time.time()
@@ -112,13 +116,7 @@ class makematrix():
 
 			self.muindex[ind] = self.mufake[mupos]
 
-	# Function to rebin the values in a matrix and assign to each bin the
-	# average intensity
-	def rebin(a, shape):
-    	sh = shape[0],a.shape[0]//shape[0],shape[1],a.shape[1]//shape[1]
-    return a.reshape(sh).mean(-1).mean(1)
-
-	def allFiles(self, data, imsiz):
+	def allFiles(self, data, imsiz, sz_fr):
 		# index_list = range(len(data.meta))
 		# met = data.meta
 
@@ -213,21 +211,47 @@ class makematrix():
 				bigarray_clean_2[:,:,k,:,:] = bigarray_clean[:,:,k,:,:] / mean_proj[k,1] * mean_max
 			print "Raw data cleaned."
 
-			### Isolate regions with diffraction signal
-			#
+			bigarray_clean_3 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			# Subtract the image background, calculated usign a frame, where we
+			# expect no diffraction signal
+			for ii in range(bigarray_clean_2.shape[2]):
+				for aa in range(bigarray_clean_2.shape[0]):
+					for bb in range(bigarray_clean_2.shape[1]):
+						IM = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
+						IM_raw = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
+						IM[:,:] = bigarray_clean_2[aa,bb,ii,:,:]
+						# Rebin the considered plot
+						IM_reb = np.zeros([bigarray_clean_2.shape[3]/int(sz_fr[0]), bigarray_clean_2.shape[4]/int(sz_fr[0])])
+						sh = IM_reb.shape[0],IM.shape[0]//IM_reb.shape[0],IM_reb.shape[1],IM.shape[1]//IM_reb.shape[1]
+						IM_reb = IM.reshape(sh).mean(-1).mean(1)
+						# Calculate the expected background distribution, assuming it to
+						# be linear
+						IM_reb_2 = np.zeros([bigarray_clean_2.shape[3]/int(sz_fr[0]), bigarray_clean_2.shape[4]/int(sz_fr[0])])
+						IM_reb_3 = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
+						IM_reb_2[0,:] = IM_reb[0,:]
+						IM_reb_2[IM_reb.shape[0]-1,:] = IM_reb[IM_reb.shape[0]-1,:]
+						IM_reb_2[:,0] = IM_reb[:,0]
+						IM_reb_2[:,IM_reb.shape[0]-1] = IM_reb[:,IM_reb.shape[0]-1]
+						for jj in range(1,IM_reb.shape[0]-1):
+							for kk in range(1,IM_reb.shape[1]-1):
+								I_min_x = min(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
+								I_max_x = max(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
+								I_min_y = min(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
+								I_max_y = max(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
+								I_eval_x = I_min_x + ((I_max_x - I_min_x) / (IM.shape[0] - 2*int(sz_fr[0]))) * (jj - int(sz_fr[0]))
+								I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
+								# For the dataset 1, we notice that the crucial component to
+								# take into account is how the background varies along Y
+								IM_reb_2[jj,kk] = np.mean([I_min_x, I_max_x])
+								# Extend the binned image to the original size (pre-binning)
+						for jj in range(IM_reb.shape[0]):
+							for kk in range(IM_reb.shape[1]):
+								IM_reb_3[jj*int(sz_fr[0]):(jj+1)*int(sz_fr[0]), kk*int(sz_fr[0]):(kk+1)*int(sz_fr[0])] = IM_reb_2[jj,kk]
 
-			# Array of images cleaned by the mean
-			bigarray_clean_norm_2 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
-			# Binarized version
-			#bigarray_clean_norm_bin = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
-			# Start by subtracting the mean
-			#for aa in range(lena):
-				#for bb in range(lenb):
-					#for cc in range(leno):
-						#bigarray_clean_norm_2[aa,bb,cc,:,:] = bigarray_clean[aa,bb,cc,:,:] - int(np.mean(bigarray_clean[aa,bb,cc,:,:]))
+						IM_clean = IM - IM_reb_3
+						IM_clean[IM_clean < 0] = 0
+						bigarray_clean_3[aa,bb,ii,:,:] = IM[:,:]
 
-			#bigarray_clean_norm_bin = bigarray_clean_norm_2
-			#bigarray_clean_norm_bin[bigarray_clean_norm_bin > 0] = 1
 
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
@@ -239,12 +263,14 @@ class makematrix():
 			del bigarray	# To avoid memory issues
 			np.save(self.directory + '/cleaning_img.npy', IM_min_avg)
 			np.save(self.directory + '/dataarray_clean.npy', bigarray_clean_2)
+			del bigarray_clean_2
+			np.save(self.directory + '/dataarray_final.npy', bigarray_clean_3)
 			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
 
 			print "Data saved."
 
 if __name__ == "__main__":
-	if len(sys.argv) != 11:
+	if len(sys.argv) != 12:
 		print "Wrong number of input parameters. Data input should be:\n\
 			Directory of data\n\
 			Name of data files\n\
@@ -256,6 +282,7 @@ if __name__ == "__main__":
 			Initial chi value\n\
 			Angular step\n\
 			Number of angular steps\n\
+			Size frame background subtraction\n\
 			"
 	else:
 		mm = makematrix(
@@ -268,4 +295,5 @@ if __name__ == "__main__":
 			sys.argv[7],
 			sys.argv[8],
 			sys.argv[9],
-			sys.argv[10])
+			sys.argv[10],
+			sys.argv[11])
