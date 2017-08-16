@@ -25,14 +25,16 @@ Output path
 Name of new output directory to make
 Initial phi value
 Initial chi value
+Angular step
+Number of angular steps
 '''
-
 
 class makematrix():
 	def __init__(
 		self, datadir, dataname,
 		poi, imgsize, outputpath, outputdir,
 		phi_0, chi_0,
+		ang_step, n_ang_steps,
 		sim=False):
 
 		try:
@@ -45,6 +47,8 @@ class makematrix():
 
 		imgsize = imgsize.split(',')
 		poi = poi.split(',')
+		ang_step = ang_step.split(',')
+		n_ang_steps = n_ang_steps.split(',')
 
 		if self.rank == 0:
 			start = time.time()
@@ -63,7 +67,7 @@ class makematrix():
 		self.meta = data.meta
 
 		self.calcGamma(data)
-		self.calcMu(data)
+		self.calcMu(data, ang_step, n_ang_steps)
 		# self.calcEtaIndexList(data, eta)
 
 		self.allFiles(data, imgsize)
@@ -97,9 +101,9 @@ class makematrix():
 			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
 			self.gammaindex[ind] = self.gamma[gammapos]
 
-	def calcMu(self, data):
+	def calcMu(self, data, ang_step, n_ang_steps):
 		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
-		self.mufake = np.arange(-3 * 0.032, 4 * 0.032, 0.032)
+		self.mufake = np.arange( - int(np.floor(float(n_ang_steps[0])/2)) * float(ang_step[0]), int(np.ceil(float(n_ang_steps[0])/2)) * float(ang_step[0]), float(ang_step[0]) )
 		self.muindex = np.zeros((len(self.index_list)))
 		for ind in self.index_list:
 			t = self.meta[ind, 4] - data.theta0
@@ -154,10 +158,13 @@ class makematrix():
 
 			### Make background subtraction
 			bigarray_clean = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			bigarray_clean_2 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0]), leno])
+			mean_proj = np.zeros([leno,2])
 			# For each projection, find the two images with the lowest integrated
 			# intensity. Images are then cleaned by subtracting the average of
-			# the two
+			# the two. Then divide the result by the mean value for a certain
+			# projection (this to take into account the sample rotation)
 			for k in range(leno):
 				I_int = np.zeros([lena, lenb])
 				for i in range(lena):
@@ -192,32 +199,35 @@ class makematrix():
 			bigarray_clean[bigarray_clean < 0] = 0
 			bigarray_clean[bigarray_clean > 6E04] = 0
 
-			# Normalize images using the mean intensities at different projections
-			bigarray_clean_norm = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
-			I_int_proj = np.zeros([leno,2])
-			for oo in range(leno):
-				I_int_proj[oo,0] = oo
-				I_int_proj[oo,1] = np.mean(bigarray_clean[:,:,oo,:,:])
+			for k in range(leno):
+				mean_proj[k,0] = k
+				sum_img = np.zeros([bigarray.shape[3], bigarray.shape[4]])
+				for ii in range(bigarray.shape[3]):
+					for jj in range(bigarray.shape[4]):
+						sum_img[ii,jj] = np.sum(bigarray_clean[:,:,k,ii,jj])
+				mean_proj[k,1] = np.mean(sum_img) / (lena*lenb)
+			mean_max = max(mean_proj[:,1])
 
-			I_int_max = max(I_int_proj[1])
-			for oo in range(leno):
-				bigarray_clean_norm[:,:,oo,:,:] = bigarray_clean[:,:,oo,:,:] * I_int_max / I_int_proj[oo,1]
-
+			# Normalize by the mean
+			for k in range(leno):
+				bigarray_clean_2[:,:,k,:,:] = bigarray_clean[:,:,k,:,:] / mean_proj[k,1] * mean_max
 			print "Raw data cleaned."
 
 			### Isolate regions with diffraction signal
+			#
+
 			# Array of images cleaned by the mean
 			bigarray_clean_norm_2 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			# Binarized version
-			bigarray_clean_norm_bin = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
+			#bigarray_clean_norm_bin = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			# Start by subtracting the mean
-			for aa in range(lena):
-				for bb in range(lenb):
-					for cc in range(leno):
-						bigarray_clean_norm_2[aa,bb,cc,:,:] = bigarray_clean[aa,bb,cc,:,:] - int(np.mean(bigarray_clean[aa,bb,cc,:,:]))
+			#for aa in range(lena):
+				#for bb in range(lenb):
+					#for cc in range(leno):
+						#bigarray_clean_norm_2[aa,bb,cc,:,:] = bigarray_clean[aa,bb,cc,:,:] - int(np.mean(bigarray_clean[aa,bb,cc,:,:]))
 
-			bigarray_clean_norm_bin = bigarray_clean_norm_2
-			bigarray_clean_norm_bin[bigarray_clean_norm_bin > 0] = 1
+			#bigarray_clean_norm_bin = bigarray_clean_norm_2
+			#bigarray_clean_norm_bin[bigarray_clean_norm_bin > 0] = 1
 
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
@@ -228,13 +238,13 @@ class makematrix():
 			np.save(self.directory + '/dataarray.npy', bigarray)
 			del bigarray	# To avoid memory issues
 			np.save(self.directory + '/cleaning_img.npy', IM_min_avg)
-			np.save(self.directory + '/dataarray_clean_norm.npy', bigarray_clean_norm)
+			np.save(self.directory + '/dataarray_clean.npy', bigarray_clean_2)
 			np.savetxt(self.directory + '/Image_properties.txt', Image_prop, fmt='%i %i %i %i')
 
 			print "Data saved."
 
 if __name__ == "__main__":
-	if len(sys.argv) != 9:
+	if len(sys.argv) != 11:
 		print "Wrong number of input parameters. Data input should be:\n\
 			Directory of data\n\
 			Name of data files\n\
@@ -244,6 +254,8 @@ if __name__ == "__main__":
 			Name of new output directory to make\n\
 			Initial phi values\n\
 			Initial chi value\n\
+			Angular step\n\
+			Number of angular steps\n\
 			"
 	else:
 		mm = makematrix(
@@ -254,4 +266,6 @@ if __name__ == "__main__":
 			sys.argv[5],
 			sys.argv[6],
 			sys.argv[7],
-			sys.argv[8])
+			sys.argv[8],
+			sys.argv[9],
+			sys.argv[10])
