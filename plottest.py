@@ -2,8 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import hsv_to_rgb
 import math
+import sys
 
-ga = np.load('/Users/andcj/hxrm_data/grain_ang.npy')
+ga = np.load('/u/data/alcer/DFXRM_rec/Rec_test/grain_ang.npy')
 
 fig, ax = plt.subplots(3, 3, figsize=(12, 12))
 
@@ -37,13 +38,15 @@ def makergbplot(im):
 	mucen = murange/2 + np.min(im[:, :, 0])
 	gammarange = np.max(im[:, :, 1]) - np.min(im[:, :, 1])
 	gammacen = gammarange/2 + np.min(im[:, :, 1])
+
 	for i in range(np.shape(im)[0]):
 		for j in range(np.shape(im)[1]):
 			mu_gamma = im[i, j, :2]
 			u = int(100 * ((mu_gamma[0]-mucen)/murange))
 			v = int(100 * ((mu_gamma[1]-gammacen)/(gammarange)))
+
 			try:
-				outputpic[i, j, :2] = hsva[u+50, v+50, :2]
+				outputpic[i, j, :2] = hsva[u+49, v+49, :2]
 			except IndexError:
 				print "IndexError", 100*(mu_gamma[1]-gammacen)/(gammarange), gammarange, u+50, v+50
 	return hsv_to_rgb(outputpic)
@@ -71,10 +74,14 @@ RGB = hsv_to_rgb(HSV)
 imagez = ga[:, :, sli, :]
 imagey = ga[:, sli, :80, :]
 imagex = ga[sli, :, :80, :]
+imagez[np.isnan(imagez)] = 0
+imagey[np.isnan(imagey)] = 0
+imagex[np.isnan(imagex)] = 0
 
 output_rgbx = makergbplot(imagex)
 output_rgby = makergbplot(imagey)
 output_rgbz = makergbplot(imagez)
+
 mumean = np.mean(ga[:, :, :80, 0])
 muvalues = np.linspace(np.min(ga[:, :, :80, 0])-mumean, np.max(ga[:, :, :80, 0])-mumean, 6)
 mulist = []
