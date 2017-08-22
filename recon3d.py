@@ -48,7 +48,7 @@ class main():
 		self.theta = np.degrees(np.sin(wavelength / (2 * d)))
 
 	def readarrays(self):
-		self.fullarray = np.load(self.par['path'] + '/dataarray.npy')
+		self.fullarray = np.load(self.par['path'] + '/dataarray_final.npy')
 		self.mu = np.load(self.par['path'] + '/mu.npy')
 		self.gamma = np.load(self.par['path'] + '/gamma.npy')
 		self.omega = np.load(self.par['path'] + '/omega.npy')
