@@ -8,6 +8,11 @@ import os
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
+from  scipy import ndimage
+from skimage.segmentation import clear_border
+from skimage.measure import label, regionprops
+from skimage.morphology import closing, square, disk, dilation, erosion
+from skimage.color import label2rgb
 
 try:
 	from mpi4py import MPI
@@ -27,6 +32,7 @@ Initial chi value
 Angular step
 Number of angular steps
 Size frame background subtraction
+Image binarization threshold
 '''
 
 # Note: the standard frame size for the background subtraction is 20 pixels
@@ -37,7 +43,7 @@ class makematrix():
 		poi, imgsize, outputpath, outputdir,
 		phi_0, chi_0,
 		ang_step, n_ang_steps,
-		sz_fr,
+		sz_fr, bin_thr,
 		sim=False):
 
 		try:
@@ -53,6 +59,7 @@ class makematrix():
 		ang_step = ang_step.split(',')
 		n_ang_steps = n_ang_steps.split(',')
 		sz_fr = sz_fr.split(',')
+		bin_thr = bin_thr.split(',')
 
 		if self.rank == 0:
 			start = time.time()
@@ -74,7 +81,7 @@ class makematrix():
 		self.calcMu(data, ang_step, n_ang_steps)
 		# self.calcEtaIndexList(data, eta)
 
-		self.allFiles(data, imgsize, sz_fr)
+		self.allFiles(data, imgsize, sz_fr, bin_thr)
 
 		if self.rank == 0:
 			stop = time.time()
@@ -116,7 +123,7 @@ class makematrix():
 
 			self.muindex[ind] = self.mufake[mupos]
 
-	def allFiles(self, data, imsiz, sz_fr):
+	def allFiles(self, data, imsiz, sz_fr, bin_thr):
 		# index_list = range(len(data.meta))
 		# met = data.meta
 
@@ -215,6 +222,7 @@ class makematrix():
 			# Subtract the image background, calculated usign a frame, where we
 			# expect no diffraction signal
 			for ii in range(bigarray_clean_2.shape[2]):
+				print ii
 				for aa in range(bigarray_clean_2.shape[0]):
 					for bb in range(bigarray_clean_2.shape[1]):
 						IM = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
@@ -236,22 +244,47 @@ class makematrix():
 							for kk in range(1,IM_reb.shape[1]-1):
 								I_min_x = min(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
 								I_max_x = max(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
-								I_min_y = min(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
-								I_max_y = max(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
+								#I_min_y = min(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
+								#I_max_y = max(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
 								I_eval_x = I_min_x + ((I_max_x - I_min_x) / (IM.shape[0] - 2*int(sz_fr[0]))) * (jj - int(sz_fr[0]))
-								I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
+								#I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
 								# For the dataset 1, we notice that the crucial component to
 								# take into account is how the background varies along Y
-								IM_reb_2[jj,kk] = np.mean([I_min_x, I_max_x])
+								IM_reb_2[jj,kk] = I_eval_x
 								# Extend the binned image to the original size (pre-binning)
 						for jj in range(IM_reb.shape[0]):
 							for kk in range(IM_reb.shape[1]):
 								IM_reb_3[jj*int(sz_fr[0]):(jj+1)*int(sz_fr[0]), kk*int(sz_fr[0]):(kk+1)*int(sz_fr[0])] = IM_reb_2[jj,kk]
 
+						IM_clean = np.zeros([IM.shape[0], IM.shape[1]])
 						IM_clean = IM - IM_reb_3
 						IM_clean[IM_clean < 0] = 0
-						bigarray_clean_3[aa,bb,ii,:,:] = IM[:,:]
 
+						# Recognize the diffraction signal and set all the
+						# outside pixels to zero. We do so by making a mask
+						IM_clean_bin = np.zeros([IM.shape[0], IM.shape[1]])
+						IM_clean_bin[IM_clean > int(bin_thr[0])] = 1
+
+						Cleared = ndimage.binary_fill_holes(IM_clean_bin).astype(int)
+						Dilated = erosion(dilation(Cleared, disk(1)), disk(1))
+						Dilated_c = ndimage.binary_fill_holes(Dilated).astype(int)
+
+						# Label image regions
+						label_image = label(Dilated_c)
+
+						Mask = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
+						IM_clean_masked = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
+						for region in regionprops(label_image):
+                            #Take regions with large enough areas
+							if region.area >= 100:
+								id = region.label
+								Mask[label_image == id] = 1
+
+						IM_clean_masked = IM_clean * Mask
+
+						bigarray_clean_3[aa,bb,ii,:,:] = IM_clean_masked[:,:]
+
+			print "Morphology operations performed."
 
 			# np.save(self.directory + '/alpha.npy', self.alpha)
 			# np.save(self.directory + '/beta.npy', self.beta)
@@ -270,7 +303,7 @@ class makematrix():
 			print "Data saved."
 
 if __name__ == "__main__":
-	if len(sys.argv) != 12:
+	if len(sys.argv) != 13:
 		print "Wrong number of input parameters. Data input should be:\n\
 			Directory of data\n\
 			Name of data files\n\
@@ -283,6 +316,7 @@ if __name__ == "__main__":
 			Angular step\n\
 			Number of angular steps\n\
 			Size frame background subtraction\n\
+			Image binarization threshold\n\
 			"
 	else:
 		mm = makematrix(
@@ -296,4 +330,5 @@ if __name__ == "__main__":
 			sys.argv[8],
 			sys.argv[9],
 			sys.argv[10],
-			sys.argv[11])
+			sys.argv[11],
+			sys.argv[12])
