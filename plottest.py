@@ -10,6 +10,8 @@ fig, ax = plt.subplots(3, 3, figsize=(12, 12))
 
 sli = 50
 
+ga[np.isnan(ga)] = 0
+
 ax[0, 0].imshow(ga[sli, :, :80, 0])
 ax[1, 0].imshow(ga[:, sli, :80, 0])
 ax[2, 0].imshow(ga[:, :, sli, 0])
