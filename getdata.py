@@ -1,5 +1,5 @@
 # python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/sundaynight topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test 0.785 -3.319 20 300
-# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 11 58.5 20 300
+# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 0.0585 11 20 300
 
 from lib.miniged import GetEdfData
 import sys
@@ -94,6 +94,17 @@ class makematrix():
 			os.makedirs(directory)
 		return directory
 
+	def calcMu(self, data, ang_step, n_ang_steps):
+		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
+		self.mufake = np.arange( - int(np.floor(float(n_ang_steps[0])/2)) * float(ang_step[0]), int(np.ceil(float(n_ang_steps[0])/2)) * float(ang_step[0]), float(ang_step[0]) )
+		self.muindex = np.zeros((len(self.index_list)))
+		for ind in self.index_list:
+			t = self.meta[ind, 4] - data.theta0
+
+			mupos = np.where(self.mufake == min(self.mufake, key=lambda x: abs(x-t)))[0][0]
+
+			self.muindex[ind] = self.mufake[mupos]
+
 	def calcGamma(self, data):
 		# for om in self.omega:
 		om = self.omega[0]
@@ -111,17 +122,6 @@ class makematrix():
 
 			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
 			self.gammaindex[ind] = self.gamma[gammapos]
-
-	def calcMu(self, data, ang_step, n_ang_steps):
-		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
-		self.mufake = np.arange( - int(np.floor(float(n_ang_steps[0])/2)) * float(ang_step[0]), int(np.ceil(float(n_ang_steps[0])/2)) * float(ang_step[0]), float(ang_step[0]) )
-		self.muindex = np.zeros((len(self.index_list)))
-		for ind in self.index_list:
-			t = self.meta[ind, 4] - data.theta0
-
-			mupos = np.where(self.mufake == min(self.mufake, key=lambda x: abs(x-t)))[0][0]
-
-			self.muindex[ind] = self.mufake[mupos]
 
 	def allFiles(self, data, imsiz, sz_fr, bin_thr):
 		# index_list = range(len(data.meta))
