@@ -1265,4 +1265,3 @@ if __name__ == "__main__":
     #Saves in the original format (unsigned short)
     OldHeader = exe.GetStaticHeader(2)
     exe.WriteImage({}, ushort, 1, OldHeader["DataType"])
-

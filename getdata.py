@@ -1,5 +1,7 @@
+# Examples:
 # python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/sundaynight topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test 0.785 -3.319 20 300
-# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 0.0585 11 20 300
+# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 0.0585 11 20 30
+# python getdata.py /u/data/alcer/Topotomo_phil topotomo_pinc_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_3 -0.6 5.86003 0.032 7 20 10
 
 from lib.miniged import GetEdfData
 import sys
@@ -222,7 +224,7 @@ class makematrix():
 			# Subtract the image background, calculated usign a frame, where we
 			# expect no diffraction signal
 			for ii in range(bigarray_clean_2.shape[2]):
-				print ii
+				print 'Cleaning projection', ii
 				for aa in range(bigarray_clean_2.shape[0]):
 					for bb in range(bigarray_clean_2.shape[1]):
 						IM = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
@@ -326,6 +328,7 @@ if __name__ == "__main__":
 			Image binarization threshold\n\
 			"
 	else:
+		print sys.argv
 		mm = makematrix(
 			sys.argv[1],
 			sys.argv[2],
