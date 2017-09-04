@@ -1,7 +1,5 @@
-# Examples:
 # python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/sundaynight topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test 0.785 -3.319 20 300
-# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 0.0585 11 20 30
-# python getdata.py /u/data/alcer/Topotomo_phil topotomo_pinc_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_3 -0.6 5.86003 0.032 7 20 10
+# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 11 58.5 20 300
 
 from lib.miniged import GetEdfData
 import sys
@@ -96,17 +94,6 @@ class makematrix():
 			os.makedirs(directory)
 		return directory
 
-	def calcMu(self, data, ang_step, n_ang_steps):
-		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
-		self.mufake = np.arange( - int(np.floor(float(n_ang_steps[0])/2)) * float(ang_step[0]), int(np.ceil(float(n_ang_steps[0])/2)) * float(ang_step[0]), float(ang_step[0]) )
-		self.muindex = np.zeros((len(self.index_list)))
-		for ind in self.index_list:
-			t = self.meta[ind, 4] - data.theta0
-
-			mupos = np.where(self.mufake == min(self.mufake, key=lambda x: abs(x-t)))[0][0]
-
-			self.muindex[ind] = self.mufake[mupos]
-
 	def calcGamma(self, data):
 		# for om in self.omega:
 		om = self.omega[0]
@@ -124,6 +111,17 @@ class makematrix():
 
 			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
 			self.gammaindex[ind] = self.gamma[gammapos]
+
+	def calcMu(self, data, ang_step, n_ang_steps):
+		# self.mufake = data.mu0 + np.arange(-3.5 * 0.032, 3.5 * 0.032, 0.032)
+		self.mufake = np.arange( - int(np.floor(float(n_ang_steps[0])/2)) * float(ang_step[0]), int(np.ceil(float(n_ang_steps[0])/2)) * float(ang_step[0]), float(ang_step[0]) )
+		self.muindex = np.zeros((len(self.index_list)))
+		for ind in self.index_list:
+			t = self.meta[ind, 4] - data.theta0
+
+			mupos = np.where(self.mufake == min(self.mufake, key=lambda x: abs(x-t)))[0][0]
+
+			self.muindex[ind] = self.mufake[mupos]
 
 	def allFiles(self, data, imsiz, sz_fr, bin_thr):
 		# index_list = range(len(data.meta))
@@ -237,7 +235,7 @@ class makematrix():
 			# Subtract the image background, calculated usign a frame, where we
 			# expect no diffraction signal
 			for ii in range(bigarray_clean_2.shape[2]):
-				print 'Cleaning projection', ii
+				print ii
 				for aa in range(bigarray_clean_2.shape[0]):
 					for bb in range(bigarray_clean_2.shape[1]):
 						IM = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
@@ -249,27 +247,30 @@ class makematrix():
 						IM_reb = IM.reshape(sh).mean(-1).mean(1)
 						# Calculate the expected background distribution, assuming it to
 						# be linear
-						IM_reb_2 = np.zeros([IM.shape[0], IM.shape[1]])
+						IM_reb_2 = np.zeros([bigarray_clean_2.shape[3]/int(sz_fr[0]), bigarray_clean_2.shape[4]/int(sz_fr[0])])
+						IM_reb_3 = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
+						IM_reb_2[0,:] = IM_reb[0,:]
+						IM_reb_2[IM_reb.shape[0]-1,:] = IM_reb[IM_reb.shape[0]-1,:]
+						IM_reb_2[:,0] = IM_reb[:,0]
+						IM_reb_2[:,IM_reb.shape[0]-1] = IM_reb[:,IM_reb.shape[0]-1]
 						for jj in range(1,IM_reb.shape[0]-1):
 							for kk in range(1,IM_reb.shape[1]-1):
 								I_min_x = min(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
 								I_max_x = max(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
 								#I_min_y = min(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
 								#I_max_y = max(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
-								for uu in range(jj*int(sz_fr[0]), (jj + 1)*int(sz_fr[0])):
-									for vv in range(kk*int(sz_fr[0]), (kk + 1)*int(sz_fr[0])):
-										I_eval_x = I_min_x + ((I_max_x - I_min_x) / (IM.shape[0] - 2*int(sz_fr[0]))) * (uu - int(sz_fr[0]))
-										#I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
-										# For the dataset 1, we notice that the crucial component to
-										# take into account is how the background varies along Y
-										IM_reb_2[uu,vv] = I_eval_x
+								I_eval_x = I_min_x + ((I_max_x - I_min_x) / (IM.shape[0] - 2*int(sz_fr[0]))) * (jj - int(sz_fr[0]))
+								#I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
+								# For the dataset 1, we notice that the crucial component to
+								# take into account is how the background varies along Y
+								IM_reb_2[jj,kk] = I_eval_x
+								# Extend the binned image to the original size (pre-binning)
+						for jj in range(IM_reb.shape[0]):
+							for kk in range(IM_reb.shape[1]):
+								IM_reb_3[jj*int(sz_fr[0]):(jj+1)*int(sz_fr[0]), kk*int(sz_fr[0]):(kk+1)*int(sz_fr[0])] = IM_reb_2[jj,kk]
 
 						IM_clean = np.zeros([IM.shape[0], IM.shape[1]])
-						IM_clean = IM - IM_reb_2
-						IM_clean[0:int(sz_fr[0]),:] = 0
-						IM_clean[IM.shape[0]-int(sz_fr[0]):IM.shape[0],:] = 0
-						IM_clean[:,0:int(sz_fr[0])] = 0
-						IM_clean[:,IM.shape[0]-int(sz_fr[0]):IM.shape[0]] = 0
+						IM_clean = IM - IM_reb_3
 						IM_clean[IM_clean < 0] = 0
 
 						# Recognize the diffraction signal and set all the
@@ -293,16 +294,6 @@ class makematrix():
 								Mask[label_image == id] = 1
 
 						IM_clean_masked = IM_clean * Mask
-
-						# Plot images before and after cleaning procedure
-						#fig = plt.figure()
-						#ax = plt.subplot(1, 2, 1)
-						#plt.imshow(IM)
-						#ax.set_title("Raw image")
-						#ax = plt.subplot(1, 2, 2)
-						#plt.imshow(IM_clean_masked)
-						#ax.set_title("Cleaned image")
-						#plt.show()
 
 						bigarray_clean_3[aa,bb,ii,:,:] = IM_clean_masked[:,:]
 
@@ -341,7 +332,6 @@ if __name__ == "__main__":
 			Image binarization threshold\n\
 			"
 	else:
-		print sys.argv
 		mm = makematrix(
 			sys.argv[1],
 			sys.argv[2],
