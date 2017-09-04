@@ -98,15 +98,15 @@ class makematrix():
 		# for om in self.omega:
 		om = self.omega[0]
 		ind = np.where(self.meta[:, 2] == om)
-		a = self.meta[ind, 0][0]
+		a = self.meta[ind, 1][0]
 
-		gamma1 = (a - data.alpha0) / np.cos(np.radians(om))
+		gamma1 = (a - data.beta0) / np.cos(np.radians(om))
 		self.gamma = np.sort(list(set(gamma1)))
 		self.gammaindex = np.zeros((len(self.index_list)))
 
 		for ind in self.index_list:
 			om = self.meta[ind, 2]
-			a = self.meta[ind, 0] - data.alpha0
+			a = self.meta[ind, 1] - data.beta0
 			gamma1 = a / np.cos(np.radians(om))
 
 			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
@@ -134,7 +134,6 @@ class makematrix():
 			imgarray = data.makeImgArray(self.index_list, 50, 'linetrace')
 
 		if self.rank == 0:
-			# lena = len(self.mu)
 			lena = len(self.mufake)
 			lenb = len(self.gamma)
 			leno = len(self.omega)
@@ -147,7 +146,6 @@ class makematrix():
 				b = np.where(self.gamma == self.gammaindex[ind])  # roll
 				c = np.where(self.omega == self.meta[ind, 2])  # omega
 				# d = np.where(self.mu == met[ind, 4])
-				# print a, b, c
 				if a == [0] and b == [1] and c == [10]:
 					print ind, self.data_files[ind]
 
