@@ -216,7 +216,6 @@ class makematrix():
 						sum_img[ii,jj] = np.sum(bigarray_clean[:,:,k,ii,jj])
 				mean_proj[k,1] = np.mean(sum_img)
 			mean_mean = np.mean(mean_proj[:,1])
-			print mean_mean
 
 			# Normalize by the mean
 			for k in range(leno):

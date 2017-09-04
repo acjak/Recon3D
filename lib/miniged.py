@@ -260,6 +260,7 @@ class GetEdfData(object):
 				self.meta[i, 3] = srcur
 
 		self.meta = np.around(self.meta, decimals=8)
+		print self.meta
 
 	def getMetaData(self):
 		print "Starting meta data collection."
