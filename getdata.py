@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from  scipy import ndimage
 from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
-from skimage.morphology import closing, square, disk, dilation, erosion
+from skimage.morphology import disk, dilation, erosion
 from skimage.color import label2rgb
 
 try:
@@ -168,6 +168,7 @@ class makematrix():
 			bigarray_clean_2 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0]), leno])
 			mean_proj = np.zeros([leno,2])
+			mean_proj_2 = np.zeros([leno,2])
 			# For each projection, find the two images with the lowest integrated
 			# intensity. Images are then cleaned by subtracting the average of
 			# the two. Then divide the result by the mean value for a certain
@@ -181,26 +182,29 @@ class makematrix():
 				# Remove zeros from I_int
 				I_int = I_int[I_int != 0]
 
-				min_I = np.amin(I_int)
-				min2_I = np.amin(np.array(I_int)[I_int != np.amin(I_int)])
-				IM_min_1 = np.zeros([int(imsiz[1]), int(imsiz[0])])
-				IM_min_2 = np.zeros([int(imsiz[1]), int(imsiz[0])])
-				#IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0])])
+				if I_int.shape[0] < 2:
+					IM_min_avg[:,:,k] = np.zeros([int(imsiz[1]), int(imsiz[0])])
+				else:
+					min_I = np.amin(I_int)
+					min2_I = np.amin(np.array(I_int)[I_int != min_I])
+					IM_min_1 = np.zeros([int(imsiz[1]), int(imsiz[0])])
+					IM_min_2 = np.zeros([int(imsiz[1]), int(imsiz[0])])
+					#IM_min_avg = np.zeros([int(imsiz[1]), int(imsiz[0])])
 
-				for i in range(lena):
-					for j in range(lenb):
-						if sum(sum(bigarray[i,j,k,:,:])) == min_I:
-							IM_min_1[:,:] = bigarray[i,j,k,:,:]
-						elif sum(sum(bigarray[i,j,k,:,:])) == min2_I:
-							IM_min_2[:,:] = bigarray[i,j,k,:,:]
+					for i in range(lena):
+						for j in range(lenb):
+							if sum(sum(bigarray[i,j,k,:,:])) == min_I:
+								IM_min_1[:,:] = bigarray[i,j,k,:,:]
+							elif sum(sum(bigarray[i,j,k,:,:])) == min2_I:
+								IM_min_2[:,:] = bigarray[i,j,k,:,:]
 
-				# Average cleaning images
-				IM_min_avg[:,:,k] = 0.5 * (IM_min_1[:,:] + IM_min_2[:,:])
+				    # Average cleaning images
+					IM_min_avg[:,:,k] = 0.5 * (IM_min_1[:,:] + IM_min_2[:,:])
 
-				# Subtract the average from the relative images
-				for i in range(lena):
-					for j in range(lenb):
-						bigarray_clean[i,j,k,:,:] = bigarray[i,j,k,:,:] - IM_min_avg[:,:,k]
+					# Subtract the average from the relative images
+					for i in range(lena):
+						for j in range(lenb):
+							bigarray_clean[i,j,k,:,:] = bigarray[i,j,k,:,:] - IM_min_avg[:,:,k]
 
 			# Set negative values to zero; take care of hot pixels
 			bigarray_clean[bigarray_clean < 0] = 0
@@ -212,13 +216,22 @@ class makematrix():
 				for ii in range(bigarray.shape[3]):
 					for jj in range(bigarray.shape[4]):
 						sum_img[ii,jj] = np.sum(bigarray_clean[:,:,k,ii,jj])
-				mean_proj[k,1] = np.mean(sum_img) / (lena*lenb)
-			mean_max = max(mean_proj[:,1])
+				mean_proj[k,1] = np.mean(sum_img)
+			mean_mean = np.mean(mean_proj[:,1])
 
 			# Normalize by the mean
 			for k in range(leno):
-				bigarray_clean_2[:,:,k,:,:] = bigarray_clean[:,:,k,:,:] / mean_proj[k,1] * mean_max
+				bigarray_clean_2[:,:,k,:,:] = bigarray_clean[:,:,k,:,:] / mean_proj[k,1] * mean_mean
 			print "Raw data cleaned."
+
+			for k in range(leno):
+				mean_proj_2[k,0] = k
+				sum_img = np.zeros([bigarray.shape[3], bigarray.shape[4]])
+				for ii in range(bigarray.shape[3]):
+					for jj in range(bigarray.shape[4]):
+						sum_img[ii,jj] = np.sum(bigarray_clean_2[:,:,k,ii,jj])
+				mean_proj_2[k,1] = np.mean(sum_img)
+			mean_mean_2 = np.mean(mean_proj_2[:,1])
 
 			bigarray_clean_3 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			# Subtract the image background, calculated usign a frame, where we
