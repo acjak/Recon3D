@@ -217,14 +217,6 @@ class makematrix():
 			# Calculate the mean of the mean only considering the positive values
 			mean_mean = np.sum(mean_proj[:,1])/(np.sum(mean_proj[:,1] != 0))
 
-			fig = plt.figure()
-			plt.scatter(mean_proj[:,0], mean_proj[:,1])
-			plt.xlabel('Projection number')
-			plt.ylabel('Median intensity in summed image')
-			plt.show()
-			print mean_proj[:,1]
-			sys.exit()
-
 			# Normalize by the mean
 			for k in range(leno):
 				if mean_proj[k,1] > 0:
