@@ -277,7 +277,6 @@ class GetEdfData(object):
 				self.meta[i, 3] = srcur
 
 		self.meta = np.around(self.meta, decimals=8)
-		print self.meta
 
 	def getMetaData(self):
 		print "Starting meta data collection."
@@ -449,12 +448,12 @@ class GetEdfData(object):
 				imgsum = np.sum(img0, 1) / len(img0[0, :])
 
 				# Adjusting for gradient in image.
-				ran = np.array(range(len(imgsum)))
-				popt, pcov = self.fitLine(ran, imgsum)
-				fittedline = ran * popt[0] + popt[1]
-				fittedline = fittedline - fittedline[len(fittedline) / 2]
-				gradient = np.tile(fittedline, (len(img0[0, :]), 1)).transpose()
-				imgarray_part[i, :, :] = img0 - gradient
+				# ran = np.array(range(len(imgsum)))
+				#popt, pcov = self.fitLine(ran, imgsum)
+				#fittedline = ran * popt[0] + popt[1]
+				#fittedline = fittedline - fittedline[len(fittedline) / 2]
+				#gradient = np.tile(fittedline, (len(img0[0, :]), 1)).transpose()
+				imgarray_part[i, :, :] = img0 #- gradient
 
 			imgarray_part[0, 0, 0] = self.rank
 			if self.rank == 0:

@@ -98,18 +98,24 @@ class makematrix():
 		# for om in self.omega:
 		om = self.omega[0]
 		ind = np.where(self.meta[:, 2] == om)
-		a = self.meta[ind, 1][0]
+		a = self.meta[ind, 0][0]
+		b = self.meta[ind, 1][0]
 
-		gamma1 = (a - data.beta0) / np.cos(np.radians(om))
-		self.gamma = np.sort(list(set(gamma1)))
+		#gamma1 = (a - data.alpha0) / np.cos(np.radians(om))
+		gamma2 = (b - data.beta0) / np.cos(np.radians(om))
+		#self.gamma = np.sort(list(set(gamma1)))
+		self.gamma = np.sort(list(set(gamma2)))
 		self.gammaindex = np.zeros((len(self.index_list)))
 
 		for ind in self.index_list:
 			om = self.meta[ind, 2]
-			a = self.meta[ind, 1] - data.beta0
-			gamma1 = a / np.cos(np.radians(om))
+			#a = self.meta[ind, 0] - data.alpha0
+			b = self.meta[ind, 1] - data.beta0
+			#gamma1 = a / np.cos(np.radians(om))
+			gamma2 = b / np.cos(np.radians(om))
 
-			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
+			#gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma1)))[0][0]
+			gammapos = np.where(self.gamma == min(self.gamma, key=lambda x: abs(x-gamma2)))[0][0]
 			self.gammaindex[ind] = self.gamma[gammapos]
 
 	def calcMu(self, data, ang_step, n_ang_steps):
@@ -220,7 +226,6 @@ class makematrix():
 			# Normalize by the mean
 			for k in range(leno):
 				if mean_proj[k,1] > 0:
-				    print mean_proj[k,1], mean_mean
 				    bigarray_clean_2[:,:,k,:,:] = bigarray_clean[:,:,k,:,:] / mean_proj[k,1] * mean_mean
 			print "Raw data cleaned."
 
@@ -246,7 +251,7 @@ class makematrix():
 							IM = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
 							IM_raw = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
 							IM[:,:] = bigarray_clean_2[aa,bb,ii,:,:]
-							if sz_fr > 0:
+							if int(sz_fr[0]) > 0:
 								# Rebin the considered plot
 								IM_reb = np.zeros([bigarray_clean_2.shape[3]/int(sz_fr[0]), bigarray_clean_2.shape[4]/int(sz_fr[0])])
 								sh = IM_reb.shape[0],IM.shape[0]//IM_reb.shape[0],IM_reb.shape[1],IM.shape[1]//IM_reb.shape[1]
@@ -278,32 +283,32 @@ class makematrix():
 								IM_clean = np.zeros([IM.shape[0], IM.shape[1]])
 							        IM_clean = IM - IM_reb_3
 							        IM_clean[IM_clean < 0] = 0
+								
+								# Recognize the diffraction signal and set all the
+	 						        # outside pixels to zero. We do so by making a mask
+	 						        IM_clean_bin = np.zeros([IM.shape[0], IM.shape[1]])
+	 						        IM_clean_bin[IM_clean > int(bin_thr[0])] = 1
+
+	 						        Cleared = ndimage.binary_fill_holes(IM_clean_bin).astype(int)
+	 						        Dilated = erosion(dilation(Cleared, disk(1)), disk(1))
+	 						        Dilated_c = ndimage.binary_fill_holes(Dilated).astype(int)
+
+	 						        # Label image regions
+	 						        label_image = label(Dilated_c)
+
+	 							Mask = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
+	 							IM_clean_masked = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
+	 							for region in regionprops(label_image):
+	                                                                 #Take regions with large enough areas
+	 								if region.area >= 100:
+	 									id = region.label
+	 									Mask[label_image == id] = 1
+
+	 							IM_clean_masked = IM_clean * Mask
 
 						        else:
-							        IM_clean = IM_reb_3
-							        IM_clean[IM_clean < 0] = 0
-
-						        # Recognize the diffraction signal and set all the
-						        # outside pixels to zero. We do so by making a mask
-						        IM_clean_bin = np.zeros([IM.shape[0], IM.shape[1]])
-						        IM_clean_bin[IM_clean > int(bin_thr[0])] = 1
-
-						        Cleared = ndimage.binary_fill_holes(IM_clean_bin).astype(int)
-						        Dilated = erosion(dilation(Cleared, disk(1)), disk(1))
-						        Dilated_c = ndimage.binary_fill_holes(Dilated).astype(int)
-
-						        # Label image regions
-						        label_image = label(Dilated_c)
-
-							Mask = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
-							IM_clean_masked = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
-							for region in regionprops(label_image):
-                                                                #Take regions with large enough areas
-								if region.area >= 100:
-									id = region.label
-									Mask[label_image == id] = 1
-
-							IM_clean_masked = IM_clean * Mask
+							        IM_clean_masked = np.zeros([IM.shape[0], IM.shape[1]])
+							        IM_clean_masked[IM < bin_thr[0])] = 0
 
 							bigarray_clean_3[aa,bb,ii,:,:] = IM_clean_masked[:,:]
 
