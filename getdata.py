@@ -1,5 +1,5 @@
 # python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/sundaynight topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test 0.785 -3.319 20 300
-# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 11 58.5 20 300
+# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 0.0585 11 20 300
 
 from lib.miniged import GetEdfData
 import sys
@@ -215,6 +215,7 @@ class makematrix():
 					for jj in range(bigarray.shape[4]):
 						sum_img[ii,jj] = np.sum(bigarray_clean[:,:,k,ii,jj])
 				mean_proj[k,1] = np.mean(sum_img)
+
 			mean_mean = np.mean(mean_proj[:,1])
 
 			# Normalize by the mean
@@ -228,8 +229,7 @@ class makematrix():
 				for ii in range(bigarray.shape[3]):
 					for jj in range(bigarray.shape[4]):
 						sum_img[ii,jj] = np.sum(bigarray_clean_2[:,:,k,ii,jj])
-				mean_proj_2[k,1] = np.mean(sum_img)
-			mean_mean_2 = np.mean(mean_proj_2[:,1])
+						mean_proj_2[k,1] = np.mean(sum_img)
 
 			bigarray_clean_3 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			# Subtract the image background, calculated usign a frame, where we
@@ -247,30 +247,27 @@ class makematrix():
 						IM_reb = IM.reshape(sh).mean(-1).mean(1)
 						# Calculate the expected background distribution, assuming it to
 						# be linear
-						IM_reb_2 = np.zeros([bigarray_clean_2.shape[3]/int(sz_fr[0]), bigarray_clean_2.shape[4]/int(sz_fr[0])])
-						IM_reb_3 = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
-						IM_reb_2[0,:] = IM_reb[0,:]
-						IM_reb_2[IM_reb.shape[0]-1,:] = IM_reb[IM_reb.shape[0]-1,:]
-						IM_reb_2[:,0] = IM_reb[:,0]
-						IM_reb_2[:,IM_reb.shape[0]-1] = IM_reb[:,IM_reb.shape[0]-1]
+						IM_reb_2 = np.zeros([IM.shape[0], IM.shape[1]])
 						for jj in range(1,IM_reb.shape[0]-1):
 							for kk in range(1,IM_reb.shape[1]-1):
 								I_min_x = min(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
 								I_max_x = max(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
 								#I_min_y = min(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
 								#I_max_y = max(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
-								I_eval_x = I_min_x + ((I_max_x - I_min_x) / (IM.shape[0] - 2*int(sz_fr[0]))) * (jj - int(sz_fr[0]))
-								#I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
-								# For the dataset 1, we notice that the crucial component to
-								# take into account is how the background varies along Y
-								IM_reb_2[jj,kk] = I_eval_x
-								# Extend the binned image to the original size (pre-binning)
-						for jj in range(IM_reb.shape[0]):
-							for kk in range(IM_reb.shape[1]):
-								IM_reb_3[jj*int(sz_fr[0]):(jj+1)*int(sz_fr[0]), kk*int(sz_fr[0]):(kk+1)*int(sz_fr[0])] = IM_reb_2[jj,kk]
+								for uu in range(jj*int(sz_fr[0]), (jj + 1)*int(sz_fr[0])):
+									for vv in range(kk*int(sz_fr[0]), (kk + 1)*int(sz_fr[0])):
+										I_eval_x = I_min_x + ((I_max_x - I_min_x) / (IM.shape[0] - 2*int(sz_fr[0]))) * (uu - int(sz_fr[0]))
+										#I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
+										# For the dataset 1, we notice that the crucial component to
+										# take into account is how the background varies along Y
+										IM_reb_2[uu,vv] = I_eval_x
 
 						IM_clean = np.zeros([IM.shape[0], IM.shape[1]])
-						IM_clean = IM - IM_reb_3
+						IM_clean = IM - IM_reb_2
+						IM_clean[0:int(sz_fr[0]),:] = 0
+						IM_clean[IM.shape[0]-int(sz_fr[0]):IM.shape[0],:] = 0
+						IM_clean[:,0:int(sz_fr[0])] = 0
+						IM_clean[:,IM.shape[0]-int(sz_fr[0]):IM.shape[0]] = 0
 						IM_clean[IM_clean < 0] = 0
 
 						# Recognize the diffraction signal and set all the
