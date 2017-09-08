@@ -10,17 +10,28 @@ except ImportError:
 	print "No MPI, running on 1 core."
 
 
+'''
+Inputs:
+Ini file
+Rotation center (X coordinate)
+'''
+
 class main():
-	def __init__(self, inifile):
+	def __init__(
+		self, inifile,
+		x_rot_centre):
+
 		self.par = self.getparameters(inifile)
 		self.getTheta()
 		self.setup_mpi()
+
+		x_rot_centre = x_rot_centre.split(',')
 
 		if self.rank == 0:
 			start = time.time()
 
 		self.readarrays()
-		grain_ang = self.reconstruct_mpi()
+		grain_ang = self.reconstruct_mpi(x_rot_centre)
 
 		if self.rank == 0:
 			self.outputfiles(grain_ang)
@@ -54,7 +65,7 @@ class main():
 		self.omega = np.load(self.par['path'] + '/omega.npy')
 		# self.theta = np.load(self.par['path'] + '/theta.npy')
 
-	def reconstruct_mpi(self):
+	def reconstruct_mpi(self,x_rot_centre):
 		ypix = np.array(self.par['grain_steps'])[2]
 
 		# Chose part of data set for a specific core (rank).
@@ -63,7 +74,7 @@ class main():
 		istop = (self.rank + 1) * local_n
 
 		# Run part of the data set on the current core.
-		local_grain_ang = self.reconstruct_part(ista=istart, isto=istop)
+		local_grain_ang = self.reconstruct_part(ista=istart, isto=istop, x_rot=x_rot_centre)
 
 		if self.rank == 0:
 			# Make empty arrays to fill in data from other cores.
@@ -98,7 +109,7 @@ class main():
 			# all other process send their result to core 0.
 			self.comm.Send(local_grain_ang, dest=0)
 
-	def reconstruct_part(self, ista, isto):
+	def reconstruct_part(self, ista, isto, x_rot):
 		"""
 		Loop through virtual sample voxel-by-voxel and assign orientations based on
 		forward projections onto read image stack. Done by finding the max intensity
@@ -121,8 +132,9 @@ class main():
 
 		dety_size = np.shape(self.fullarray)[3]
 		detz_size = np.shape(self.fullarray)[4]
+		detz_center = int(x_rot[0])
 		dety_center = (dety_size - 0.) / 2  # should probably be -1 in stead of -0...
-		detz_center = (detz_size - 0.) / 2.  # also here... but simulations used 0
+		#detz_center = (detz_size - 0.) / 2.  # also here... but simulations used 0
 		lens = len(slow)
 		lenm = len(med)
 		lenf = len(fast)
@@ -428,6 +440,9 @@ class main():
 
 
 if __name__ == "__main__":
-	if len(sys.argv) != 2:
-		print "No .ini file specified."
-	rec = main(sys.argv[1])
+	if len(sys.argv) != 3:
+		print "Input parameters: .ini file, X coord rotation axis"
+	else:
+		rec = main(
+			sys.argv[1],
+			sys.argv[2])
