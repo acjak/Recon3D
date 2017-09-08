@@ -1,5 +1,5 @@
 # python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/sundaynight topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test 0.785 -3.319 20 300
-# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 11 58.5 20 300
+# python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 0.0585 11 20 300
 
 from lib.miniged import GetEdfData
 import sys
@@ -220,8 +220,13 @@ class makematrix():
 					for jj in range(bigarray.shape[4]):
 						sum_img[ii,jj] = np.sum(bigarray_clean[:,:,k,ii,jj])
 				mean_proj[k,1] = np.mean(sum_img)
+<<<<<<< HEAD
 			# Calculate the mean of the mean only considering the positive values
 			mean_mean = np.sum(mean_proj[:,1])/(np.sum(mean_proj[:,1] != 0))
+=======
+
+			mean_mean = np.mean(mean_proj[:,1])
+>>>>>>> e8c03899938d1bc6260e242aaf183747f390a221
 
 			# Normalize by the mean
 			for k in range(leno):
@@ -230,6 +235,7 @@ class makematrix():
 			print "Raw data cleaned."
 
 			for k in range(leno):
+<<<<<<< HEAD
 				if mean_proj[k,1] > 0:
 				    mean_proj_2[k,0] = k
 				    sum_img = np.zeros([bigarray.shape[3], bigarray.shape[4]])
@@ -239,11 +245,20 @@ class makematrix():
 				    mean_proj_2[k,1] = np.mean(sum_img)
 			# Calculate the mean only considering nonzero values
 			mean_mean_2 = np.sum(mean_proj_2[:,1])/(np.sum(mean_proj_2[:,1] != 0))
+=======
+				mean_proj_2[k,0] = k
+				sum_img = np.zeros([bigarray.shape[3], bigarray.shape[4]])
+				for ii in range(bigarray.shape[3]):
+					for jj in range(bigarray.shape[4]):
+						sum_img[ii,jj] = np.sum(bigarray_clean_2[:,:,k,ii,jj])
+						mean_proj_2[k,1] = np.mean(sum_img)
+>>>>>>> e8c03899938d1bc6260e242aaf183747f390a221
 
 			bigarray_clean_3 = np.zeros((lena, lenb, leno, int(imsiz[1]), int(imsiz[0])), dtype=np.uint16)
 			# Subtract the image background, calculated usign a frame, where we
 			# expect no diffraction signal
 			for ii in range(bigarray_clean_2.shape[2]):
+<<<<<<< HEAD
 				if mean_proj[ii,1] > 0:
 					print ii
 					for aa in range(bigarray_clean_2.shape[0]):
@@ -311,6 +326,66 @@ class makematrix():
 							        IM_clean_masked[IM < bin_thr[0])] = 0
 
 							bigarray_clean_3[aa,bb,ii,:,:] = IM_clean_masked[:,:]
+=======
+				print ii
+				for aa in range(bigarray_clean_2.shape[0]):
+					for bb in range(bigarray_clean_2.shape[1]):
+						IM = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
+						IM_raw = np.zeros([bigarray_clean_2.shape[3], bigarray_clean_2.shape[4]])
+						IM[:,:] = bigarray_clean_2[aa,bb,ii,:,:]
+						# Rebin the considered plot
+						IM_reb = np.zeros([bigarray_clean_2.shape[3]/int(sz_fr[0]), bigarray_clean_2.shape[4]/int(sz_fr[0])])
+						sh = IM_reb.shape[0],IM.shape[0]//IM_reb.shape[0],IM_reb.shape[1],IM.shape[1]//IM_reb.shape[1]
+						IM_reb = IM.reshape(sh).mean(-1).mean(1)
+						# Calculate the expected background distribution, assuming it to
+						# be linear
+						IM_reb_2 = np.zeros([IM.shape[0], IM.shape[1]])
+						for jj in range(1,IM_reb.shape[0]-1):
+							for kk in range(1,IM_reb.shape[1]-1):
+								I_min_x = min(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
+								I_max_x = max(IM_reb[jj,0], IM_reb[jj,IM_reb.shape[1]-1])
+								#I_min_y = min(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
+								#I_max_y = max(IM_reb[0,kk], IM_reb[IM_reb.shape[0]-1, kk])
+								for uu in range(jj*int(sz_fr[0]), (jj + 1)*int(sz_fr[0])):
+									for vv in range(kk*int(sz_fr[0]), (kk + 1)*int(sz_fr[0])):
+										I_eval_x = I_min_x + ((I_max_x - I_min_x) / (IM.shape[0] - 2*int(sz_fr[0]))) * (uu - int(sz_fr[0]))
+										#I_eval_y = I_min_y + ((I_max_y - I_min_y) / (IM.shape[1] - 2*int(sz_fr[0]))) * (kk - int(sz_fr[0]))
+										# For the dataset 1, we notice that the crucial component to
+										# take into account is how the background varies along Y
+										IM_reb_2[uu,vv] = I_eval_x
+
+						IM_clean = np.zeros([IM.shape[0], IM.shape[1]])
+						IM_clean = IM - IM_reb_2
+						IM_clean[0:int(sz_fr[0]),:] = 0
+						IM_clean[IM.shape[0]-int(sz_fr[0]):IM.shape[0],:] = 0
+						IM_clean[:,0:int(sz_fr[0])] = 0
+						IM_clean[:,IM.shape[0]-int(sz_fr[0]):IM.shape[0]] = 0
+						IM_clean[IM_clean < 0] = 0
+
+						# Recognize the diffraction signal and set all the
+						# outside pixels to zero. We do so by making a mask
+						IM_clean_bin = np.zeros([IM.shape[0], IM.shape[1]])
+						IM_clean_bin[IM_clean > int(bin_thr[0])] = 1
+
+						Cleared = ndimage.binary_fill_holes(IM_clean_bin).astype(int)
+						Dilated = erosion(dilation(Cleared, disk(1)), disk(1))
+						Dilated_c = ndimage.binary_fill_holes(Dilated).astype(int)
+
+						# Label image regions
+						label_image = label(Dilated_c)
+
+						Mask = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
+						IM_clean_masked = np.zeros([IM_clean.shape[0], IM_clean.shape[1]])
+						for region in regionprops(label_image):
+                            #Take regions with large enough areas
+							if region.area >= 100:
+								id = region.label
+								Mask[label_image == id] = 1
+
+						IM_clean_masked = IM_clean * Mask
+
+						bigarray_clean_3[aa,bb,ii,:,:] = IM_clean_masked[:,:]
+>>>>>>> e8c03899938d1bc6260e242aaf183747f390a221
 
 			print "Morphology operations performed."
 
