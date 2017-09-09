@@ -30,14 +30,14 @@ Arguments are the following:
 
 | Argument | Description | Example |
 | ------------- | ----------- | ----------- |
-| datadir      | Directory of .edf files. | /data/experiment1 |
-| dataname     | Name of data files. | run1_ |
-| bgdir     | Directory of background .edf files. | /data/background1 |
-| bgname     | Name of background files. | bg1_ |
-| poi     | Center point for region of interest. | 512,512 |
-| imgsize     | Size of region of interest. | 200,200 |
-| outputpath     | Path to put the output directory. | /analysis/output |
-| outputdirname     | Name of output dir. | exp1_array |
+| datadir      | Directory of .edf files | /data/experiment1 |
+| dataname     | Name of data files | run1_ |
+| bgdir     | Directory of background .edf files | /data/background1 |
+| bgname     | Name of background files | bg1_ |
+| poi     | Center point for region of interest | 512,512 |
+| imgsize     | Size of region of interest | 200,200 |
+| outputpath     | Path to put the output directory | /analysis/output |
+| outputdirname     | Name of output dir | exp1_array |
 | phi0     | Initial phi motor value | 0.69 |
 | chi_0    | Initial chi motor value | -1.625 |
 | angsteps     | Size of (chi, phi) steps | 0.0585 |
