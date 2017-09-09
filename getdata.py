@@ -171,7 +171,7 @@ class makematrix():
 			# intensity. Images are then cleaned by subtracting the average of
 			# the two. Then divide the result by the mean value for a certain
 			# projection (this to take into account the sample rotation)
-			for k in (range(96) + range(121,161)):
+			for k in range(leno):
 				I_int = np.zeros([lena, lenb])
 				for i in range(lena):
 					for j in range(lenb):
@@ -208,7 +208,7 @@ class makematrix():
 			bigarray_clean[bigarray_clean < 0] = 0
 			bigarray_clean[bigarray_clean > 6E04] = 0
 
-			for k in (range(96) + range(121,161)):
+			for k in range(leno):
 				mean_proj[k,0] = k
 				sum_img = np.zeros([bigarray.shape[3], bigarray.shape[4]])
 				for ii in range(bigarray.shape[3]):
@@ -219,7 +219,7 @@ class makematrix():
 			mean_mean = np.mean(mean_proj[:,1])
 
 			# Normalize by the mean
-			for k in (range(96) + range(121,161)):
+			for k in range(leno):
 				bigarray_clean_2[:,:,k,:,:] = bigarray_clean[:,:,k,:,:] / mean_proj[k,1] * mean_mean
 			print "Raw data cleaned."
 
@@ -227,7 +227,7 @@ class makematrix():
 			# Subtract the image background, calculated usign a frame, where we
 			# expect no diffraction signal
 			#for ii in range(bigarray_clean_2.shape[2]):
-			for ii in (range(96) + range(121,161)):
+			for ii in range(leno):
 				print ii
 				for aa in range(bigarray_clean_2.shape[0]):
 					for bb in range(bigarray_clean_2.shape[1]):

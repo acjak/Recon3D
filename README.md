@@ -45,9 +45,9 @@ Arguments are the following:
 | framebg    | Size of the frame used to clean the background | 20 |
 | binth | Threshold for image binarization | 12 |
 
-If MPI is available (as on Panda2), multiple instances of getdata.py can be run in parallel. This will increase the speed. The maximum number of processes that can be run in parallel depends on the available memory. If you get a memory error (*not enough memory available* or similar), you should
-1.  Close the current terminal window, or log out from the current *ssh* session. This will force the memory to be cleaned
-2. Lower the number of MPI instances
+If MPI is available (as on Panda2), multiple instances of getdata.py can be run in parallel. This will increase the speed. The maximum number of processes that can be run in parallel depends on the available memory. If you get a memory error (*not enough memory available* or similar), you should:
+1. Close the current terminal window, or log out from the current *ssh* session. This will force the memory to be cleaned.
+2. If the problem persists, lower the number of MPI instances.
 
 Example: run 10 instances of getdata.py in parallel:
 
