@@ -3,6 +3,7 @@ import sys
 import time
 import numpy as np
 from scipy import ndimage
+import matplotlib.pyplot as plt
 
 try:
 	from mpi4py import MPI
@@ -13,25 +14,28 @@ except ImportError:
 '''
 Inputs:
 Ini file
-Rotation center (X coordinate)
+Rotation center (X coordinate for roated image)
+Number of acceptable projections
 '''
 
 class main():
 	def __init__(
 		self, inifile,
-		x_rot_centre):
+		x_rot_centre,
+		acc_proj):
 
 		self.par = self.getparameters(inifile)
 		self.getTheta()
 		self.setup_mpi()
 
 		x_rot_centre = x_rot_centre.split(',')
+		acc_proj = acc_proj.split(',')
 
 		if self.rank == 0:
 			start = time.time()
 
 		self.readarrays()
-		grain_ang = self.reconstruct_mpi(x_rot_centre)
+		grain_ang = self.reconstruct_mpi(x_rot_centre, acc_proj)
 
 		if self.rank == 0:
 			self.outputfiles(grain_ang)
@@ -65,7 +69,7 @@ class main():
 		self.omega = np.load(self.par['path'] + '/omega.npy')
 		# self.theta = np.load(self.par['path'] + '/theta.npy')
 
-	def reconstruct_mpi(self,x_rot_centre):
+	def reconstruct_mpi(self,x_rot_centre, acc_proj):
 		ypix = np.array(self.par['grain_steps'])[2]
 
 		# Chose part of data set for a specific core (rank).
@@ -74,7 +78,7 @@ class main():
 		istop = (self.rank + 1) * local_n
 
 		# Run part of the data set on the current core.
-		local_grain_ang = self.reconstruct_part(ista=istart, isto=istop, x_rot=x_rot_centre)
+		local_grain_ang = self.reconstruct_part(ista=istart, isto=istop, x_rot=x_rot_centre, acc_proj = acc_proj)
 
 		if self.rank == 0:
 			# Make empty arrays to fill in data from other cores.
@@ -109,7 +113,7 @@ class main():
 			# all other process send their result to core 0.
 			self.comm.Send(local_grain_ang, dest=0)
 
-	def reconstruct_part(self, ista, isto, x_rot):
+	def reconstruct_part(self, ista, isto, x_rot, acc_proj):
 		"""
 		Loop through virtual sample voxel-by-voxel and assign orientations based on
 		forward projections onto read image stack. Done by finding the max intensity
@@ -156,7 +160,7 @@ class main():
 		for iz in range(ista, isto):
 			if self.rank == 0:
 				done = 100 * (float(iz - ista) / (isto - ista))
-				print "Calculation is %g perc. complete on core %g." % (done, self.rank)
+				print "Calculation is %g perc. te on core %g." % (done, self.rank)
 
 			for ix in range(grain_steps[0]):
 				timelist = []
@@ -189,26 +193,29 @@ class main():
 					prop = self.fullarray[:, :, range(lenf), dety_f, detz_f]
 
 					# Sum all mosaicity maps along the omega dimension, resulting in a single mosaicity map.
-					# Make a center of mass calculation of that map.
-					com = list(ndimage.measurements.center_of_mass(np.sum(prop, 2)))
+					# Locate the intensity maximum in that map.
+					com = list(ndimage.measurements.maximum_position(np.sum(prop, 2)))
 
-					# mosaicitymap[ix, iy, iz, :, :] = np.sum(prop, 4)
+					# Show mosaicity plot and location of max value
+					#if np.sum(prop) > 0:
+						#fig = plt.figure()
+						#plt.imshow(np.sum(prop, 2))
+						#plt.scatter(int(com[1]), int(com[0]))
+						#plt.show()
 
-					# Try to make a weight of the given voxel, i.e. a value of the
-					# likelihood that this voxel is inside the grain.
-					try:
-						grain_ang[ix, iy, iz, 2] = np.sum(prop) / len(np.where(prop != 0))
-						# grain_ang[ix, iy, iz, 2] = np.sum(
-						# 	prop, 2)[np.rint(com[0]), np.rint(com[1])] / np.sum(prop)
-					except IndexError:
-						pass
+					if np.sum(prop) > 0:
+						# Count the number of nonzero elements
+						C_matrix = prop[int(com[0]), int(com[1]), :]
+						C_matrix[C_matrix > 0] = 1
+						completeness = np.sum(C_matrix)/int(acc_proj[0])
 
-					# Translate coordinates into mu and gamma angles.
-					mu = com[0] * (mas - mis) / lens + mis
-					gamma = com[1] * (mam - mim) / lenm + mim
+						# Translate coordinates into mu and gamma angles.
+						mu = com[0] * (mas - mis) / lens + mis
+						gamma = com[1] * (mam - mim) / lenm + mim
 
-					grain_ang[ix, iy, iz, 0] = mu
-					grain_ang[ix, iy, iz, 1] = gamma
+						grain_ang[ix, iy, iz, 0] = mu
+						grain_ang[ix, iy, iz, 1] = gamma
+						grain_ang[ix, iy, iz, 2] = completeness
 
 					if self.rank == 0:
 						t_8 = time.clock()
@@ -440,9 +447,13 @@ class main():
 
 
 if __name__ == "__main__":
-	if len(sys.argv) != 3:
-		print "Input parameters: .ini file, X coord rotation axis"
+	if len(sys.argv) != 4:
+		print "Input parameters: .ini file\n\
+			X coord rotation axis\n\
+			Number of acceptable projections\n\
+			"
 	else:
 		rec = main(
 			sys.argv[1],
-			sys.argv[2])
+			sys.argv[2],
+			sys.argv[3])
