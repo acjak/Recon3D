@@ -9,47 +9,95 @@ addpath('/npy_matlab_master/');
 Summed_img = readNPY('/u/data/alcer/DFXRM_rec/Rec_test_2/summed_data_astra.npy');
 V = readNPY('/u/data/alcer/DFXRM_rec/Rec_test_2/grain_ang.npy');
 
-%for i = [1 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 130 135 140 145 150 155 160]
-for i = 1:5:160
+for i = [1 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 130 135 140 145 150 155 160]
     proj_number = i;
-    compare_shapes(proj_number, V, Summed_img);
+    disp(i);
+    [P_05, P_07, P_09] = compare_shapes(proj_number, V);
+
+    P_05 = flipud(rot90(imresize(P_05(1:100, 1:100),3)));
+    P_07 = flipud(rot90(imresize(P_07(1:100, 1:100),3)));
+    P_09 = flipud(rot90(imresize(P_09(1:100, 1:100),3)));
+    
+    P_05_bin = zeros(size(P_05));
+    P_07_bin = zeros(size(P_07));
+    P_09_bin = zeros(size(P_09));
+    
+    for ii = 1:size(P_05,1)
+        for jj = 1:size(P_05,2)
+            if P_05(ii,jj) > 0
+                P_05_bin(ii,jj) = 1;
+            end
+            if P_07(ii,jj) > 0
+                P_07_bin(ii,jj) = 1;
+            end
+            if P_09(ii,jj) > 0
+                P_09_bin(ii,jj) = 1;
+            end
+        end
+    end
+    
+    % Fill holes in the binary images
+    P_05_bin = imfill(P_05_bin);
+    P_07_bin = imfill(P_07_bin);
+    P_09_bin = imfill(P_09_bin);
+    
+    % Find perimeter of binary images
+    Per_05 = bwperim(P_05_bin);
+    Per_07 = bwperim(P_07_bin);
+    Per_09 = bwperim(P_09_bin);
+    
+    % Select the summed intensities image corresponding to the considered
+    % angle
+    Sum = squeeze(Summed_img(:,proj_number,:));
+    
+    overlay1 = flipud(imoverlay(imoverlay(imoverlay(Sum, Per_05, [.3 1 .3]), Per_07, [.3 1 .3]), Per_09, [.3 1 .3]));
+    
+    F = figure; 
+    subplot(1,3,1);
+    h = pcolor(Sum); shading flat; hold on;
+    subplot(1,3,2);
+    h = pcolor(P_05); shading flat; hold on;
+    subplot(1,3,3);
+    imshow(overlay1);
+    address_F = sprintf('Shape_comp/Shape_comp%03i.png', proj_number);
+    saveas(F, address_F, 'png');
+    close;
 end
     
-function compare_shapes(alpha, V, Summed_img)
+% For a given completeness value, and a given rotation angle, this function 
+% calculates the shape of the diffraction signal collected by the detector, 
+% and the border of the shape
+function [Proj_final_05, Proj_final_07, Proj_final_09] = compare_shapes(alpha, V)
 
-% Select volume corresponding to a certain completeness
-V_th_low = zeros(size(V,1), size(V,2), size(V,1));
-V_th_up = zeros(size(V,1), size(V,2), size(V,1));
+% Select volume corresponding to the lower completeness value considered (0.5)
+V_th= zeros(size(V,1), size(V,2), size(V,1));
 for ii =1:size(V,1)
     for jj = 1:size(V,2)
         for kk = 1:size(V,3)
             if V(ii,jj,kk,3) > 0.5
-                V_th_low(ii,jj,kk) = V(ii,jj,kk,3);
-            end
-            if V(ii,jj,kk,3) > 0.75
-                V_th_up(ii,jj,kk) = V(ii,jj,kk,3);
+                V_th(ii,jj,kk) = V(ii,jj,kk,3);
             end
         end
     end
 end
 
 % Save calculated volumes
-%savevtk(V_shape, '/u/data/alcer/DFXRM_rec/Rec_test_2/V_weight.vtk');
 %savevtk(V_th, '/u/data/alcer/DFXRM_rec/Rec_test_2/V_th.vtk');
 
 % Rotation angle
-alpha1 = alpha*1.12;
+alpha1 = alpha*1.125;
 
-C_tot = sum(sum(sum(V_th_low)));
+C_tot = sum(sum(sum(V_th)));
 % Calculate centre of mass of V_th_up, weighted by completeness
 X_CM = 0; Y_CM = 0; Z_CM = 0;
 for ii = 1:size(V,1)
     for jj = 1:size(V,2)
         for kk = 1:size(V,3)
-            if V_th_low(ii,jj,kk) > 0.5
-                X_CM = X_CM + ii*V_th_low(ii,jj,kk);
-                Y_CM = Y_CM + jj*V_th_low(ii,jj,kk);
-                Z_CM = Z_CM + kk*V_th_low(ii,jj,kk);
+            % Set a threshold to accept a voxel
+            if V_th(ii,jj,kk) > 0.5
+                X_CM = X_CM + ii*V_th(ii,jj,kk);
+                Y_CM = Y_CM + jj*V_th(ii,jj,kk);
+                Z_CM = Z_CM + kk*V_th(ii,jj,kk);
             end
         end
     end
@@ -61,14 +109,13 @@ CM = [X_CM, Y_CM, Z_CM] / C_tot;
 % sample along Z
 Sum_Z = zeros(size(V,1), size(V,2));
 % Project all values along Z
-Sum_Z = sum(V_th_low,3);
+Sum_Z = sum(V_th,3);
 
 % Plot binarized projection along Z, together with CM
 %figure;
-%Sum_Z(CM(1), CM(2)) = 100;
-%h = pcolor(Sum_Z); shading flat;
+Sum_Z(int8(CM(1)), int8(CM(2))) = 100;
 
-% Find radius of the circle containing the binarized proj of the volume
+% Find radius of the circle containing the entire XY projection
 count_dist = zeros(nnz(Sum_Z), 2);
 cc = 0;
 for ii = 1:size(V,1)
@@ -83,108 +130,141 @@ end
 % Find radius containg all values
 R = max(count_dist(:,2));
 
+% Translate the projection, so that the CM is at the image center 
 Circle_container = zeros(int8(2*R) + 4, int8(2*R) + 4);
-Dx = abs(int8(R) - CM(1));
-Dy = abs(int8(R) - CM(2));
-for ii = 3:size(V,1) + 2
-    for jj = 3:size(V,2) + 2
-        Circle_container(ii + Dx,jj + Dy) = Sum_Z(ii-2, jj-2);
+Dx = abs(int8((size(Circle_container,1)/2) - CM(1)));
+Dy = abs(int8((size(Circle_container,2)/2) - CM(2)));
+Dz = abs(int8(size(V,3)/2 - CM(3)));
+for ii = 1:size(V,1)
+    for jj = 1:size(V,2)
+        Circle_container(ii + Dx, jj + Dy) = Sum_Z(ii, jj);
     end
 end
 
-% Plot circle containing grain, and projected image before and after
-% padding
-figure;
-subplot(1,2,1);
-h = pcolor(Sum_Z); shading flat;
-hold on;
-th = 0:pi/50:2*pi;
-xunit = R * cos(th) + CM(2);
-yunit = R * sin(th) + CM(1);
-plot(xunit, yunit);
-hold on;
-scatter(CM(2), CM(1), 'o', 'MarkerFaceColor', 'b');
-title('Before padding');
-subplot(1,2,2);
-h = pcolor(Circle_container); shading flat;
-hold on;
-th = 0:pi/50:2*pi;
-xunit = R * cos(th) + R + 3;
-yunit = R * sin(th) + R + 3;
-plot(xunit, yunit);
-hold on;
-scatter(CM(2) + Dy + 2, CM(1) + Dx + 2, 'o', 'MarkerFaceColor', 'b');
-title('After padding');
+X_CM_circ = 0; Y_CM_circ = 0;
+for aa = 1:size(Circle_container, 1)
+    for bb = 1:size(Circle_container, 2)
+        X_CM_circ = X_CM_circ + aa*Circle_container(aa,bb);
+        Y_CM_circ = Y_CM_circ + bb*Circle_container(aa,bb);
+    end
+end
+C_tot_circ = sum(sum(sum(V_th)));
+CM_circ = [X_CM_circ, Y_CM_circ] / C_tot_circ;
+
+% Plot projection before and after translation
+% figure; 
+% subplot(1,2,1);
+% h = pcolor(Sum_Z); shading flat; hold on;
+% scatter(CM(2), CM(1));
+% subplot(1,2,2);
+% h = pcolor(Circle_container); shading flat; hold on;
+% scatter(CM_circ(2), CM_circ(1));
 
 IM_x_th_low = zeros(size(Circle_container,1), size(Circle_container,2)); 
 IM_x_th_up = zeros(size(Circle_container,1), size(Circle_container,2));
 
-Cyliner_container = zeros(size(Circle_container,1), size(Circle_container, 2), size(V,3));
-
-
-% Sum reconstructed data along X (rotate and project the sample)
-for ii = 1:size(Circle_container,1)-1
-    for jj = 1:size(,2)-1
-        for kk = 1:size(V,3)-1
-            disp(ii * cosd(alpha) - jj * sind(alpha))
-            disp(ii * sind(alpha) + jj * cosd(alpha))
-            IM_x_th_low(jj,kk) = IM_x_th_low(jj,kk) + V_th_low((ii-CM(2)) * cosd(alpha) - (jj - CM(1)) * sind(alpha), (ii-CM(2)) * sind(alpha) + (jj-CM(1)) * cosd(alpha), kk);
-            IM_x_th_up(jj,kk) = IM_x_th_up(jj,kk) + V_th_up((ii-CM(2)) * cosd(alpha) - (jj - CM(1)) * sind(alpha), (ii-CM(2)) * sind(alpha) + (jj-CM(1)) * cosd(alpha), kk);
+% Iterate for each layer. Z translation to make CM at the center of the
+% projected image
+Cylinder_container = zeros(size(Circle_container,1), size(Circle_container, 2), size(V,3) + Dz);
+for ii = 3:size(V,1) + 2
+    for jj = 3:size(V,2) + 2
+        for kk = 3:size(V,3) + 2
+            Cylinder_container(ii + Dx,jj + Dy, kk + Dz) = V_th(ii-2, jj-2, kk - 2);
         end
     end
 end
 
-IM_x_th_low = rot90(rot90(rot90(IM_x_th_low)));
-IM_x_th_up = rot90(rot90(rot90(IM_x_th_up)));
+% Rotate each horizontal layer by alpha and project (rotation around Z)
+Rot_Z = zeros(size(imrotate(Cylinder_container, alpha1), 1), ...
+    size(imrotate(Cylinder_container, alpha), 1), size(V,3));
+Rot_Z = imrotate(Cylinder_container, alpha1+180);
+ 
+% Rotate the sample around Y
+theta = 10.3754;        % Scattering angle
+test_l = squeeze(Rot_Z(:, 50, :));
+test_l_rot = imrotate(test_l, theta); 
 
-% Find perimeter of the projected data and compare with experimental data
-% (summed for a certain projection)
-IM_x_bin_low = zeros(size(V,1)-1, size(V,2)-1);
-IM_x_bin_up = zeros(size(V,1)-1, size(V,2)-1);
-
-for ii = 1:size(V,1)-1
-    for jj = 1:size(V,2)-1
-        if IM_x_th_low(ii,jj) > 0
-            IM_x_bin_low(ii,jj) = 1;
-        end
-        if IM_x_th_up(ii,jj) > 0
-            IM_x_bin_up(ii,jj) = 1;
+Rot_Y = zeros(size(test_l_rot, 1), size(Rot_Z,1), size(test_l_rot,2));
+for jj = 1:size(Rot_Y,2)
+    layer_in = squeeze(Rot_Z(:,jj,:));
+    layer_fin = imrotate(layer_in, 10.3754);    
+    for ii = 1:size(Rot_Y,1)
+        for kk = 1:size(Rot_Y,3)
+            Rot_Y(ii,jj,kk) = layer_fin(ii,kk);
         end
     end
 end
 
-IM_x_th_low_r = imresize(IM_x_th_low, 3);
-IM_x_bin_low_r = imresize(IM_x_bin_low, 3);
+% Find CM in Rot_Y (to check that it's approx. at the center of the volume)
+X_CM_rot = 0; Y_CM_rot = 0; Z_CM_rot = 0;
+C_tot_rot = sum(sum(sum(Rot_Y)));
+for ii = 1:size(Rot_Y,1)
+    for jj = 1:size(Rot_Y,2)
+        for kk = 1:size(Rot_Y,3)
+            if Rot_Y(ii,jj,kk) > 0
+                X_CM_rot = X_CM_rot + ii*Rot_Y(ii,jj,kk);
+                Y_CM_rot = Y_CM_rot + jj*Rot_Y(ii,jj,kk);
+                Z_CM_rot = Z_CM_rot + kk*Rot_Y(ii,jj,kk);
+            end
+        end
+    end
+end
+CM_rot = [X_CM_rot, Y_CM_rot, Z_CM_rot] / C_tot_rot;
+     
+% Sum the rotated volume along the X axis
+X_sum_05 = zeros(size(Rot_Y,2), size(Rot_Y,3));
+X_sum_05 = squeeze(sum(Rot_Y, 1));
 
-IM_x_th_up_r = imresize(IM_x_th_up, 3);
-IM_x_bin_up_r = imresize(IM_x_bin_up, 3);
+% Resize the image, so that it matches the original size
+Proj_final_05 = zeros(size(Sum_Z));
+frame_x = int8((size(Rot_Y,2) - size(Proj_final_05,1))/2);
+frame_y = int8((size(Rot_Y,3) - size(Proj_final_05,2))/2);
+for aa = 1:size(Proj_final_05, 1)
+    for bb = 1:size(Proj_final_05, 2)
+        Proj_final_05(aa, bb) = X_sum_05(aa + frame_x, bb + frame_y);  
+    end
+end
 
-P1 = bwperim(IM_x_bin_low_r);
-P3 = bwperim(IM_x_bin_up_r);
+% We also want to project the volumes corresponding to C = 0.7 and C = 0.9
+Rot_Y_07 = zeros(size(Rot_Y));
+Rot_Y_09 = zeros(size(Rot_Y));
+for ii = 1:size(Rot_Y,1)
+    for jj = 1:size(Rot_Y,2)
+        for kk = 1:size(Rot_Y,3)
+            if Rot_Y(ii,jj,kk) > 0.7
+                Rot_Y_07(ii,jj,kk) = Rot_Y(ii,jj,kk);
+            end
+            if Rot_Y(ii,jj,kk) > 0.9
+                Rot_Y_09(ii,jj,kk) = Rot_Y(ii,jj,kk);
+            end
+        end
+    end
+end
 
-S1 = squeeze(Summed_img(:,alpha,:));
-S2 = squeeze(Summed_img(:,80,:));
+% Sum the rotated volume along the X axis
+X_sum_07 = zeros(size(Rot_Y,2), size(Rot_Y,3));
+X_sum_07 = squeeze(sum(Rot_Y_07, 1));
 
-%figure; imagesc(S1);
+X_sum_09 = zeros(size(Rot_Y,2), size(Rot_Y,3));
+X_sum_09 = squeeze(sum(Rot_Y_09, 1));
 
-overlay1 = flipud(imoverlay(imoverlay(S1, P1, [.3 1 .3]), P3, [.3 1 .3]));
-%imshow(overlay1);
+% Resize the image, so that it matches the original size
+Proj_final_07 = zeros(size(Sum_Z));
+frame_x = int8((size(Rot_Y,2) - size(Proj_final_07,1))/2);
+frame_y = int8((size(Rot_Y,3) - size(Proj_final_07,2))/2);
+for aa = 1:size(Proj_final_07, 1)
+    for bb = 1:size(Proj_final_07, 2)
+        Proj_final_07(aa, bb) = X_sum_07(aa + frame_x, bb + frame_y);  
+    end
+end
 
-fig = figure; 
-title(sprintf('Projection %03i', alpha));
-subplot(1,3,1);
-h = pcolor(S1); shading flat;
-%title('Sum of diffraction images','fontsize',18);
-subplot(1,3,2);
-h = pcolor(IM_x_th_low_r); shading flat;
-%title('Projected reconstruction','fontsize',18);
-subplot(1,3,3);
-imshow(overlay1); 
-%title('Perimeter overlay','fontsize',18);
-print(fig, sprintf('Shape_comp%03i', alpha), '-dpdf');
-close;
-
-%figure; imagesc(rot90(IM_x_shape));
-%figure; imagesc(rot90(IM_y_shape));
+Proj_final_09 = zeros(size(Sum_Z));
+frame_x = int8((size(Rot_Y,2) - size(Proj_final_09,1))/2);
+frame_y = int8((size(Rot_Y,3) - size(Proj_final_09,2))/2);
+for aa = 1:size(Proj_final_09, 1)
+    for bb = 1:size(Proj_final_09, 2)
+        Proj_final_09(aa, bb) = X_sum_09(aa + frame_x, bb + frame_y);  
+    end
+end
 
 end
