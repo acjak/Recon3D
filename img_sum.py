@@ -12,7 +12,7 @@ from  scipy import ndimage
 
 '''
 Inputs:
-Dataset directory
+Data directory
 Modality (1 if you need to determine threshold and rotation centre,
 2 to determine rotation axis and 3 to prepare data for reconstruction)
 Lower threshold (put 0 if you need to determine it)
@@ -128,7 +128,7 @@ class makematrix():
 if __name__ == "__main__":
 	if len(sys.argv) != 5:
 		print "Wrong number of input parameters. Data input should be:\n\
-            Dataset directory\n\
+            Data directory\n\
             Modality (1 if you need to determine which threshold to use\n\
        	    2 to determine rotation axis, 3 to prepare data)\n\
             Lower threshold (put 0 if you need to determine it)\n\
