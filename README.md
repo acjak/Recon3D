@@ -20,7 +20,7 @@ Running Recon3D requires having Miniconda2 and Fable on your Panda2 account. To 
 
 ## From raw data to 3D reconstruction
 
-The manual describing how to get a 3D reconstruction from a topotomo dataset is available [here][https://github.com/albusdemens/Recon3D/blob/master/Manual_Recon3D.pdf].
+The manual describing how to get a 3D reconstruction from a topotomo dataset is available [here](https://github.com/albusdemens/Recon3D/blob/master/Manual_Recon3D.pdf).
 
 ## Note on MPI usage
 
