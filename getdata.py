@@ -21,12 +21,12 @@ except ImportError:
 
 '''
 Inputs:
-Directory of data
-Name of data files
+Data directory
+Name data files
 Point of interest
 Image size
 Output path
-Name of new output directory to make
+Output directory
 Initial phi value
 Initial chi value
 Angular step
@@ -308,12 +308,12 @@ class makematrix():
 if __name__ == "__main__":
 	if len(sys.argv) != 13:
 		print "Wrong number of input parameters. Data input should be:\n\
-			Directory of data\n\
-			Name of data files\n\
+			Data directory\n\
+			Name data files\n\
 			Point of interest\n\
 			Image size\n\
 			Output path\n\
-			Name of new output directory to make\n\
+			Output directory\n\
 			Initial phi values\n\
 			Initial chi value\n\
 			Angular step\n\

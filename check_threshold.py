@@ -5,6 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+'''
+Inputs:
+Data directory
+Modality (1 to plot image array, 2 for image sequence)
+Size of the frame used to clean the images
+Number of projections to consider
+'''
+
 class show_img():
 	def __init__(self, datadir, modality, frame_size, number_proj):
 
@@ -47,7 +55,7 @@ class show_img():
 if __name__ == "__main__":
 	if len(sys.argv) != 5:
 		print "Wrong number of input parameters. Data input should be:\n\
-			Directory of data\n\
+			Data directory\n\
 			Modality (1 to plot image array, 2 for image sequence)\n\
 			Size of the frame used to clean the images\n\
 			Number of projections\n\
