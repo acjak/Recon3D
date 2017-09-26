@@ -8,19 +8,33 @@ addpath('/npy_matlab_master/');
 % completeness
 V = readNPY('/u/data/alcer/DFXRM_rec/Rec_test_2/grain_ang.npy');
 
-V_th= zeros(size(V,1), size(V,2), size(V,1));
+% Volume selected using completeness
+V_th = zeros(size(V,1), size(V,2), size(V,3));
+% Volume with angular values
+V_th_mos = zeros(size(V,1), size(V,2), size(V,3), 3);
+
 for ii =1:size(V,1)
     for jj = 1:size(V,2)
         for kk = 1:size(V,3)
-            % The minimum completeness value for a voxel 
+            % The minimum completeness value for a voxel
             % to be part of the volume is 0.5
             if V(ii,jj,kk,3) > 0.5
                 V_th(ii,jj,kk) = V(ii,jj,kk,3);
-            else
-                V(ii,jj,kk,3) = NaN;
+                V_th_mos(ii,jj,kk,:) = V(ii,jj,kk,:);
             end
         end
     end
+end
+
+% Save the selected region
+save('Selected_vol_mos.mat', 'V_th_mos');
+
+% Rescale, se we can compare with the reocnstruction from ART+TV
+V_resc = zeros((size(V,1) * 3) -3, (size(V,2) * 3) -3, (size(V,3) * 3) - 3);
+for jj = 1:(size(V,3) - 1)
+    Layer = squeeze(V_th(1:100,1:100,jj));
+    Layer_resc = imresize(Layer, 3);
+    V_resc(:,:,jj) = Layer_resc(:,:);
 end
 
 % Save calculated volumes
