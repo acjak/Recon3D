@@ -192,8 +192,9 @@ class main():
 					# Get the mosaicity maps for the given detector positions.
 					prop = self.fullarray[:, :, range(lenf), dety_f, detz_f]
 
-					# Sum all mosaicity maps along the omega dimension, resulting in a single mosaicity map.
-					# Locate the intensity maximum in that map.
+					# Sum all orientation distributions along the omega
+					# dimension, resulting in a single orientation distribution.
+					# Locate the intensity maximum in that distribution
 					com = list(ndimage.measurements.maximum_position(np.sum(prop, 2)))
 
 					# Show mosaicity plot and location of max value
