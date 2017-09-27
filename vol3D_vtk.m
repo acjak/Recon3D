@@ -27,7 +27,7 @@ for ii =1:size(V,1)
 end
 
 % Save the selected region
-save('Selected_vol_mos.mat', 'V_th_mos');
+save('V_mos_recon3d.mat', 'V_th_mos');
 
 % Rescale, se we can compare with the reocnstruction from ART+TV
 V_resc = zeros((size(V,1) * 3) -3, (size(V,2) * 3) -3, (size(V,3) * 3) - 3);
