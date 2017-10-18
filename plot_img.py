@@ -1,3 +1,8 @@
+# Alberto Cereser, September 2017
+# DTU Fysik, alcer@fysik.dtu.dk
+
+# Use this script to plot an edf file. The FabIO module is used.
+
 import fabio
 import matplotlib.pyplot as plt
 
