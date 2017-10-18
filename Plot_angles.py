@@ -1,3 +1,9 @@
+# Alberto Cereser, September 2017
+# DTU Fysik, alcer@fysik.dtu.dk
+
+# This script shows the distribution of the projection angles where data has
+# been acquired
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -27,4 +33,3 @@ plt.scatter(Pos[:,0], Pos[:,1])
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.show()
-

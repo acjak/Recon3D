@@ -1,5 +1,8 @@
-# By showing a few images, this script allows thr user to select which threshold
-# value to use
+# Alberto Cereser, September 2017
+# DTU Fysik, alcer@fysik.dtu.dk
+
+# This script shows the user a few images, so that she can select which
+# threshold value to use
 
 import numpy as np
 import matplotlib.pyplot as plt

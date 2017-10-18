@@ -1,3 +1,6 @@
+% Alberto Cereser, September 2017
+% DTU Fysik, alcer@fysik.dtu.dk
+
 % This script locates, in the images summed at the different projections,
 % the center of mass of the intensity value. Aim: study horizontal shift
 % of the rotation axis.

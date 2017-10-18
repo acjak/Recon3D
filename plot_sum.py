@@ -1,3 +1,9 @@
+# Alberto Cereser, September 2017
+# DTU Fysik, alcer@fysik.dtu.dk
+
+# For each proejction, this script saves the sum of all collected data in a
+# separate file. Input data summed using img_sum.py
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -18,4 +24,3 @@ for i in range(A.shape[1]):
     IM = A[:,i,:]
     filename = ("/u/data/alcer/DFXRM_rec/Rec_test_2/Layers_sum/Layer_%03i.png" % i)
     matplotlib.image.imsave(filename, IM)
-

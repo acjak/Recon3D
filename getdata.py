@@ -1,3 +1,9 @@
+# Alberto Cereser and Anders C. Jakobsen, September 2017
+# DTU Fysik, alcer@fysik.dtu.dk
+
+# This script loads the dataset collected during a topotomo scan, cleans the
+# images and stores the data in an npoy array
+
 # python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/sundaynight topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test 0.785 -3.319 20 300
 # python getdata.py /u/data/andcj/hxrm/Al_april_2017/topotomo/monday/Al3/topotomoscan c6_topotomo_frelon_far_ 256,256 300,300 /u/data/alcer/DFXRM_rec Rec_test_2 0.69 -1.625 0.0585 11 20 12
 

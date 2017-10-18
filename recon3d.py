@@ -1,3 +1,10 @@
+# Alberto Cereser and Anders C. Jakobsen, September 2017
+# DTU Fysik, alcer@fysik.dtu.dk
+
+# This script reconstructs, from the data collected in a topotomo scan, the
+# 3D shape and orientation distribution of the considered grain. Input files
+# from getdata.py
+
 from check_input import read as ini
 import sys
 import time
