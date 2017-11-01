@@ -1,9 +1,11 @@
 # Alberto Cereser, September 2017
 # DTU Fysik, alcer@fysik.dtu.dk
 
-# This script sums all the DFXRM images collected at the same angle
+# This script sums topotomo images projection by projection. Data can then be
+# reconstructed using ASTRA or ART-TV.
 # Input: five-dimensional array written by getdata.py (mu, gamma, omega,
-# pixel_x, pixel_y); output: three dimensional array (omega, pixel_x, pixel_y)
+# pixel_x, pixel_y); output: three dimensional array (omega, pixel_x, pixel_y).
+
 
 # python getdata.py /u/data/alcer/DFXRM_rec/Rec_test/ 1 0
 
