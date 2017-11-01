@@ -1,8 +1,8 @@
 # Alberto Cereser, September 2017
 # DTU Fysik, alcer@fysik.dtu.dk
 
-# For each proejction, this script saves the sum of all collected data in a
-# separate file. Input data summed using img_sum.py
+# For each projection, this script saves the sum of all collected data in a
+# separate file. Input images summed using img_sum.py
 
 import numpy as np
 import matplotlib.pyplot as plt

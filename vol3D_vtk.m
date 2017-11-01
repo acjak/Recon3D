@@ -7,6 +7,10 @@
 
 close all; clear;
 
+% To be part of the sample volume, a voxel mush have completeness value greater
+% than compl_thr
+compl_thr = 0.5;
+
 addpath('/npy_matlab_master/');
 % Read reconstructed volume. Format: X, Y, Z, param. Parameters: gamma, mu,
 % completeness
@@ -21,8 +25,8 @@ for ii =1:size(V,1)
     for jj = 1:size(V,2)
         for kk = 1:size(V,3)
             % The minimum completeness value for a voxel
-            % to be part of the volume is 0.5
-            if V(ii,jj,kk,3) > 0.5
+            % to be part of the volume is
+            if V(ii,jj,kk,3) > compl_thr
                 V_th(ii,jj,kk) = V(ii,jj,kk,3);
                 V_th_mos(ii,jj,kk,:) = V(ii,jj,kk,:);
             end
