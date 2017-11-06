@@ -1,15 +1,15 @@
-% this TeX file provides an awesome example of how TeX will make super 
+% this TeX file provides an awesome example of how TeX will make super
 % awesome tables, at the cost of your of what happens when you try to make a
 % table that is very complicated.
 % Originally turned in for Dr. Nico's Security Class
 \documentclass[11pt]{scrartcl}
 
 % Use wide margins, but not quite so wide as fullpage.sty
-\marginparwidth 0.5in 
-\oddsidemargin 0.25in 
-\evensidemargin 0.25in 
+\marginparwidth 0.5in
+\oddsidemargin 0.25in
+\evensidemargin 0.25in
 \marginparsep 0.25in
-\topmargin 0.25in 
+\topmargin 0.25in
 \textwidth 6in \textheight 8 in
 % That's about enough definitions
 
@@ -53,7 +53,7 @@ escapeinside={\%*}{*)}          % if you want to add a comment within your code
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
-    filecolor=magenta,      
+    filecolor=magenta,
     urlcolor=red,
     citecolor = black,
 }
@@ -61,14 +61,14 @@ escapeinside={\%*}{*)}          % if you want to add a comment within your code
 \begin{document}
 % this is an alternate method of creating a title
 %\hfill\vbox{\hbox{Gius, Mark}
-%       \hbox{Cpe 456, Section 01}  
-%       \hbox{Lab 1}    
+%       \hbox{Cpe 456, Section 01}
+%       \hbox{Lab 1}
 %       \hbox{\today}}\par
 %
 %\bigskip
 %\centerline{\Large\bf Lab 1: Security Audit}\par
 %\bigskip
-\author{Alberto Cereser\\  
+\author{Alberto Cereser\\
 \href{mailto:alcer@fysik.dtu.dk}{alcer@fysik.dtu.dk}\\
 \href{mailto:alberto.cereser@gmail.com}{alberto.cereser@gmail.com}}
 \title{Recon3D - a reconstruction software suite for DFXRM}
@@ -79,9 +79,9 @@ escapeinside={\%*}{*)}          % if you want to add a comment within your code
 
 \section{Introduction}
 
-Recon3D is a software package to analyze datasets collected using dark-field X-ray microscopy ({\footnotesize{DFXRM}}) {\cite{dfxrm_nat_comm}}, a technique under development at the European Synchrotron Research Facility ({\footnotesize{ESRF}}). The current version of the software (Fall 2017) is designed for the setup installed at beamline {\footnotesize{ID06}}, with horizontal scattering geometry. With {\footnotesize{DFXRM}} the {\footnotesize{3D}} shape of a single deeply embedded grain, and the distribution of the crystallographic orientation inside its volume, is reconstructed from the signal collected in diffraction mode. Data are acquired varying three angles: the sample rotation angle $\omega$ and the rock and roll angles $\gamma$ and $\mu$ \cite{henning_joac}. Usually, the same number of values, and the same angular increment, is used for the two angles $\gamma$ and $\mu$. 
+Recon3D is a software package to analyze datasets collected using dark-field X-ray microscopy ({\footnotesize{DFXRM}}) {\cite{dfxrm_nat_comm}}, a technique under development at the European Synchrotron Research Facility ({\footnotesize{ESRF}}) in Grenoble. The current version of the software (November 2017) is designed for the setup installed at beamline {\footnotesize{ID06}}, with horizontal scattering geometry. With {\footnotesize{DFXRM}} the {\footnotesize{3D}} shape of a single deeply embedded grain, and the distribution of the crystallographic orientation inside its volume, is reconstructed from the signal collected in diffraction mode. Data are acquired varying three angles: the sample rotation angle $\omega$ and the rock and roll angles $\gamma$ and $\mu$ \cite{henning_joac}. Usually, the same number of values, and the same angular increment, is used for the two angles $\gamma$ and $\mu$.
 
-Recon3D has two core scripts: one to load, preprocess and store the collected data, and another to reconstruct the {\footnotesize{3D}} shape and orientation distribution of the investigated grain. In detail, the scripts are:
+Recon3D has two core scripts: one to load, preprocess and store the collected data, and another one to reconstruct the {\footnotesize{3D}} shape and orientation distribution of the investigated grain. In detail, the scripts are:
 \begin{itemize}
     \item {\texttt{getdata.py}}, which loads the dataset collected at {\footnotesize{ID06}}, cleans the images and stores them. In the current version, the software can only process data relative to a grain returning well centered diffraction spots (see Fig \ref{fig:centered_not_centered})
     \item {\texttt{recon3d.py}}, which reconstructs the {\footnotesize{3D}} shape of the investigated grain from the images cleaned by {\texttt{getdata.py}} and organized as a function of $\omega, \mu$ and $\gamma$
@@ -90,23 +90,25 @@ Recon3D has two core scripts: one to load, preprocess and store the collected da
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.75\textwidth]{centered_not_centered}
-    \caption{In the current Recon3D version (Fall 2017), {\texttt{getdata.py}} can only process frames where the diffraction signal is well centered, and it doesn't touch the frame borders, as in {\emph{a}}. The capability to reconstruct samples touching the detector frame ({\emph{b}}) will be later implemented. {\emph{a}} shows a grain in an Al sample (courtesy of Annika Diederichs, {\footnotesize{DTU MEK}}), {\footnotesize{ROI}} size: 300x300; {\emph{b}} shows a crystal in a biomineral sample (courtesy of Phil Cook, {\footnotesize{ESRF}}), {\footnotesize{ROI}} size: 512x512 (entire detector).}
+    \caption{In the current Recon3D version (November 2017), {\texttt{getdata.py}} can only process frames where the diffraction signal is well centered, and it doesn't touch the frame borders, as in {\emph{a}}. The capability to reconstruct samples touching the detector frame ({\emph{b}}) will be later implemented. {\emph{a}} shows a grain in an Al sample (courtesy of Annika Diederichs, {\footnotesize{DTU MEK}}), {\footnotesize{ROI}} size: 300x300; {\emph{b}} shows a crystal in a biomineral sample (courtesy of Phil Cook, {\footnotesize{ESRF}}), {\footnotesize{ROI}} size: 512x512 (entire detector).}
     \label{fig:centered_not_centered}
 \end{figure}
 
 \subsection{Roadmap}
 
-The Recon3D manual is structured as follows: at first, the recipe to process the collected data is presented (Sec. {\ref{sec:rec_steps}}), followed by a detailed description of how to run each script (Sec. {\ref{sec:run_scripts}}). Sec. {\ref{sec:data_acquisition}} describes how the experimental data should be collected. In Sec. {\ref{sec:getdata}} and {\ref{sec:recon3d}}, the functioning of {\texttt{getdata.py}} and {\texttt{recon3d.py}} is outlined. In Sec. {\ref{sec:validation}}, the methods used to validate the recon3d reconstruction approach, and provide the final grain reconstruction, are presented. 
+The Recon3D manual is structured as follows: at first, the recipe to process the collected data is presented (Sec. {\ref{sec:rec_steps}}), followed by a detailed description of how to run each script (Sec. {\ref{sec:run_scripts}}). Sec. {\ref{sec:data_acquisition}} describes how the experimental data should be collected. In Sec. {\ref{sec:getdata}} and {\ref{sec:recon3d}}, the functioning of {\texttt{getdata.py}} and {\texttt{recon3d.py}} is outlined. In Sec. {\ref{sec:validation}}, the methods used to validate the recon3d reconstruction approach, and provide the final grain reconstruction, are presented.
 
 \subsection{For users - software download}
 
-You can download Recon3D from  \href{https://github.com/albusdemens/Recon3D}{GitHub} and run it on your computer or (highly recommended) on Panda2. Required software: Python and Matlab. 
+You can download Recon3D from  \href{https://github.com/albusdemens/Recon3D}{GitHub} and run it on your computer or (highly recommended) on Panda2. Required software: Python and Matlab.
 
-On GitHub, the algorithms to reconstruct the {\footnotesize{3D}} grain shape using the \href{https://github.com/albusdemens/ART-TV-for-DFXRM}{\footnotesize{ART-TV}} and \href{https://github.com/albusdemens/astrarecon}{\footnotesize{ASTRA}} approach are also available. 
+On GitHub, the algorithms to reconstruct the {\footnotesize{3D}} grain shape using the \href{https://github.com/albusdemens/ART-TV-for-DFXRM}{\footnotesize{ART-TV}} and \href{https://github.com/albusdemens/astrarecon}{\footnotesize{ASTRA}} approach are also available.
 
 \subsection{For developers - how to contribute}
 
-Recon3D is an open source project hosted on \href{https://github.com/albusdemens/Recon3D}{GitHub}. To contribute to the code development, clone\footnote{If you don't know what cloning means, check \href{http://product.hubspot.com/blog/git-and-github-tutorial-for-beginners}{this} introduction to Git and GitHub.} the Recon3D distro and have fun! Except for a few Matlab scripts, all code is written in Python. 
+Recon3D is an open source project hosted on \href{https://github.com/albusdemens/Recon3D}{GitHub}. To contribute to the code development, clone\footnote{If you don't know what cloning means, check \href{http://product.hubspot.com/blog/git-and-github-tutorial-for-beginners}{this} introduction to Git and GitHub.} the Recon3D distro and have fun!
+
+All code is written in Python, except a few Matlab scripts.
 
 \subsection{Reconstruction steps}
 \label{sec:rec_steps}
@@ -128,27 +130,27 @@ Recon3D is an open source project hosted on \href{https://github.com/albusdemens
     \item Visualize the processed images using {\texttt{check\textunderscore threshold.py}}. Look at a few images and select the threshold value to separate the diffraction signal from the background. Afterwards, all intensities below the threshold value will be set to zero
     \item Look at the distribution of the projection angles, returned by {\texttt{getdata.py}}. Is there anything anomalous that should be taken into account? Script: {\texttt{plot\textunderscore angles.py}}
     \item Run {\texttt{getdata.py}}, this time using the threshold value determined in step 4
-    \item For each projection, sum all collected images using {\texttt{img\textunderscore sum.py}}. Save each image sum in a separate file using {\texttt{plot\textunderscore sum.py}}
+    \item For each projection, sum up all collected images using {\texttt{img\textunderscore sum.py}}. Save each image sum in a separate file using {\texttt{plot\textunderscore sum.py}}
     \item Load the result as a stack in \href{https://imagej.nih.gov/ij/}{ImageJ} or \href{https://imagej.net/Fiji}{\footnotesize{FIJI}}. {\emph{At present, nor ImageJ nor {\footnotesize{FIJI}} are installed on Panda2. Have a look at the images on your laptop}}
-    \item Check how the diffraction projection evolves as the grain rotates. Does the rotation axis move? Are there other grains passing by the detector, as in Fig. \ref{fig:grain_transit}? 
+    \item Check how the diffraction projection evolves as the grain rotates. Does the rotation axis move? Are there other grains passing by the detector, as in Fig. \ref{fig:grain_transit}?
     \item If some projection has to be discarded, change the {\texttt{leno}} loops in {\texttt{getdata.py}}, so that only selected projections are loaded. Example: to select projections 1 to 95, 121 to 155 and from 157 to 160, {\texttt{range(leno)}} becomes {\texttt{(range(96) + range(121,156) + range(157, 161))}}. If this is the case, repeat point 5-7
 \end{enumerate}
-   
-\subsubsection{3D reconstruction}    
-    
+
+\subsubsection{3D reconstruction}
+
 \begin{enumerate}
     \item Calculate the (possible) rotation axis shift using {\texttt{estimate\textunderscore precession.m}}
-    \item Reconstruct the shape of the sample and, for each voxel, determine the orientation by finding the ($\gamma, \mu$) angles for which the maximum intensity was recorded. Code: {\texttt{recon3d.py}}, which among other takes as input the axis rotation shift 
+    \item Reconstruct the shape of the sample and, for each voxel, determine the orientation by finding the ($\gamma, \mu$) angles for which the maximum intensity was recorded. Code: {\texttt{recon3d.py}}, which among other takes as input the axis rotation shift
     \item Convert the {\footnotesize{3D}} grain shape returned by {\texttt{recon3d.py}} to a {\texttt{vtk}} file, that can be visualized with \href{https://www.paraview.org/}{ParaView}. Script: {\texttt{vol3D\textunderscore vtk.m}}. The script also returns the reconstruction as a {\texttt{.mat}} file
     \item Play with the {\footnotesize{3D}} reconstruction in ParaView
     \item Compare the reconstructed volume with the experimental data using {\texttt{vol3D.m}}. The {\footnotesize{3D}} shape returned by {\texttt{recon3d.py}} heavily depends on the selected {\emph{completeness value}}
-\end{enumerate}  
+\end{enumerate}
 
 \subsubsection{Reconstruction validation and final result}
 
-\begin{enumerate}    
+\begin{enumerate}
     \item The grain shape reconstruction returned by {\texttt{recon3d.py}} greatly depends on which completeness value is chosen. Therefore, it is a good idea to reconstruct the grain shape also using another approach, possibly not dependent on the completeness parameter. Currently, the options available are {\footnotesize{ASTRA}} (GitHub repo: \\ \href{https://github.com/albusdemens/astrarecon}{https://github.com/albusdemens/astrarecon}) and {\footnotesize{ART-TV}} (GitHub repo: \\ \href{https://github.com/albusdemens/ART-TV-for-DFXRM}{https://github.com/albusdemens/ART-TV-for-DFXRM}). At present, the procedure is successfully tested only for the {\footnotesize{ART-TV}} case.
-    
+
     Steps to validate the recon3d reconstruction and combine it with the one from {\footnotesize{ART-TV}}:
     \begin{enumerate}
         \item Reconstruct the grain shape using {\footnotesize{ART-TV}}. Script: {\texttt{reconstr.m}}, which calls the function {\texttt{ART\textunderscore TV\textunderscore reconstruct\textunderscore 2d\textunderscore new.m}}. As input, the script takes the images summed projection by projection (for the image sum procedure, see point 7 of ``Data loading, cleaning and storage'' \ref{sec:load_clean_store})
@@ -162,7 +164,7 @@ ParaView is a software package to visualize and manipulate {\footnotesize{3D}} v
 
 \begin{enumerate}
     \item Click on the eye symbol in the ``Pipeline Browser'' window
-    \item Select {\emph{Volume}} as a visualization option 
+    \item Select {\emph{Volume}} as a visualization option
 \end{enumerate}
 
 \begin{figure}[h]
@@ -172,7 +174,7 @@ ParaView is a software package to visualize and manipulate {\footnotesize{3D}} v
     \label{fig:my_label}
 \end{figure}
 
-ParaView can also save animations, with a {\footnotesize{3D}} volume rotating around its axis. To create an animation (see Fig. \ref{fig:PW_animation}), 
+ParaView can also save animations, with a {\footnotesize{3D}} volume rotating around its axis. To create an animation (see Fig. \ref{fig:PW_animation}),
 
 \begin{itemize}
     \item Select {\texttt{View $\rightarrow$ Animation view}}
@@ -214,7 +216,7 @@ When {\texttt{mpirun}} is available (as on Panda2), multiple instances of {\text
 
 Script to select which threshold value to use to clean the input images with {\texttt{getdata.py}}.
 
-Command: 
+Command:
 
 {\texttt{\$ python check\textunderscore threshold.py [Data directory] [Modality] [Size frame background subtraction] [Number of projections to consider]}}
 
@@ -241,7 +243,7 @@ Script to estimate the position of the sample rotation axis. For each projection
 \subsubsection{getdata.py}
 \label{script:getdata}
 
-Script to load the {\texttt{.edf}} files (images and header with data), organize the information and return a series of numpy arrays. The functioning of the script is presented in detail in Sec. \ref{sec:getdata}. 
+Script to load the {\texttt{.edf}} files (images and header with data), organize the information and return a series of numpy arrays. The functioning of the script is presented in detail in Sec. \ref{sec:getdata}.
 
 Command:
 
@@ -252,7 +254,7 @@ Command:
 Inputs:
 
 \begin{itemize}
-    \item {\texttt{mpirun -n NN}} allows to run the script using {\texttt{NN}} processors. If {\texttt{mpirun}} is not available, delete this command. For a note on how to use {\texttt{mpirun}}, see Sec. \ref{sec:mpirun} 
+    \item {\texttt{mpirun -n NN}} allows to run the script using {\texttt{NN}} processors. If {\texttt{mpirun}} is not available, delete this command. For a note on how to use {\texttt{mpirun}}, see Sec. \ref{sec:mpirun}
     \item {\texttt{Data directory}} is the directory storing the {\texttt{edf}} files collected at {\footnotesize{ID06}}
     \item {\texttt{Name data files}} is the file name prefix (without incremental numbers) common to all files
     \item {\texttt{Point of interest}} is the center of the region of interest ({\footnotesize{ROI}}) to be considered
@@ -267,7 +269,7 @@ Inputs:
     \item {\texttt{Image binarization threshold}} is the threshold value used to select the diffraction spots. All pixels with intensity value below the threshold are set to zero. For more details, see Sec. {\ref{subs:data_cleaning}}
 \end{itemize}
 
-Example: 
+Example:
 
 {\texttt{\$ python getdata.py /u/data/andcj/hxrm/Al\textunderscore april\textunderscore 2017/ c6\textunderscore topotomo\textunderscore frelon}}
 
@@ -280,7 +282,7 @@ Example:
 
 Sum, for each projection, all images collected by varying $\gamma$ and $\mu$. Before saving the summed images, have a look at them and select (possible) upper and lower threshold values.
 
-Command: 
+Command:
 
 {\texttt{\$ python img\textunderscore sum.py [Data directory] [Modality] [Lower threshold] [Upper threshold]}}
 
@@ -289,12 +291,12 @@ Command:
     \item {\texttt{Modality}}: 1 to determine threshold values, 2 to check the rotation axis and 3 to prepare the data for {\footnotesize{ASTRA}} and {\footnotesize{ART-TV}}
     \item {\texttt{Lower threshold}} is the lower threshold value. Select 0 for modality 1, modality 2 and if a lower threshold is not necessary
     \item {\texttt{Upper threshold}} is the upper threshold value. Select 0 for modality 1, modality 2 and if an upper threshold is not necessary
-    
+
 \end{itemize}
 
 \subsubsection{plot\textunderscore angles.py}
 
-Shows the distribution of the $\omega$ angles where the sample was scanned. 
+Shows the distribution of the $\omega$ angles where the sample was scanned.
 
 \subsubsection{plot\textunderscore img.py}
 
@@ -303,39 +305,39 @@ Simple script to plot {\texttt{.edf}} files. To show a file, change path in the 
 \subsubsection{plot\textunderscore sum.py}
 \label{sub_s:plot_sum}
 
-Saves the output from {\texttt{img\textunderscore sum.py}} in {\texttt{png}} files. In this way, the sum of all images collected at a given projection is saved in a different image. 
+Saves the output from {\texttt{img\textunderscore sum.py}} in {\texttt{png}} files. In this way, the sum of all images collected at a given projection is saved in a different image.
 
 \subsubsection{rebin\textunderscore img.py}
 \label{sub_s:rebin}
 
-Script to rebin the collected topotomo frames, to make the dataset manageable by Panda2. 
+Script to rebin the collected topotomo frames, to make the dataset manageable by Panda2.
 
 \danger Change paths is the script.
 
 \subsubsection{recon3d.py}
 
-Program to reconstruct the volume of the grain investigated using topotomography. 
+Program to reconstruct the volume of the grain investigated using topotomography.
 
-Command: 
+Command:
 
 {\texttt{\$ [mpirun -n NN] python recon3d.py [Ini file] [Rotation center] [Number acceptable projections]}}
 
 Inputs:
 
 \begin{itemize}
-    \item {\texttt{mpirun -n NN}} allows to run the script using {\texttt{NN}} processors. If {\texttt{mpirun}} is not available, delete this command. For a note on how to use {\texttt{mpirun}}, see Sec. \ref{sec:mpirun} 
+    \item {\texttt{mpirun -n NN}} allows to run the script using {\texttt{NN}} processors. If {\texttt{mpirun}} is not available, delete this command. For a note on how to use {\texttt{mpirun}}, see Sec. \ref{sec:mpirun}
     \item {\texttt{Ini file}} is the file with the crystallographic parameters for the reconstruction. Parameters in the {\texttt{ini file}}:
     \begin{itemize}
         \item {\texttt{sg\textunderscore no}} is the space group number
         \item {\texttt{unit\textunderscore cell}} is the array describing the unit cells parameters ($a,b,c,\alpha, \beta, \gamma$)
         \item {\texttt{wavelength}} is the incoming beam wavelength (in \AA)
         \item {\texttt{grain\textunderscore pos}} is the center of the sample position
-        \item {\texttt{grain\textunderscore dim}}, to be calculated using 
+        \item {\texttt{grain\textunderscore dim}}, to be calculated using
         \begin{equation}
             {\texttt{grain\textunderscore dim}} = round \Bigg( \frac{{\text{Size {\footnotesize{ROI}}}}}{\texttt{M}} \Bigg)
         \end{equation}
         Where Size {\footnotesize{ROI}} is the size (in pixels) of the {\texttt{edf}} frames considered to reconstruct the sample shape
-        \item {\texttt{grain\textunderscore steps}} is the size of the volume (in voxels) containing the sample reconstruction 
+        \item {\texttt{grain\textunderscore steps}} is the size of the volume (in voxels) containing the sample reconstruction
         \item {\texttt{detx\textunderscore size}} is the {\footnotesize{X}} detector size (in pixels), after binning and before selecting an {\footnotesize{ROI}}
         \item {\texttt{detY\textunderscore size}} is the {\footnotesize{Y}} detector size (in pixels), after binning and before selecting an {\footnotesize{ROI}}
         \item {\texttt{M}} is the magnification value, which depends on the {\footnotesize{CRL}} configuration. The value is measured experimentally
@@ -345,17 +347,17 @@ Inputs:
     \end{itemize}
 
     \item {\texttt{Rotation center}} is the estimated {\footnotesize{X}} position of the rotation axis, which can be calculated using {\texttt{Estimate\textunderscore precession.m}}
-    \item {\texttt{Number acceptable projections}} is the number of projections with acceptable data (i.e., no information relative to a second grain, \ldots). It is used to calculate, for each voxel, the completeness value 
+    \item {\texttt{Number acceptable projections}} is the number of projections with acceptable data (i.e., no information relative to a second grain, \ldots). It is used to calculate, for each voxel, the completeness value
 \end{itemize}
 
 Example:
 
-{\texttt{\$ mpirun -n 15 python recon3d.py al\textunderscore test.ini 172 96}} 
+{\texttt{\$ mpirun -n 15 python recon3d.py al\textunderscore test.ini 172 96}}
 \subsubsection{vol3D.m}
 
-Script to compare, at different projections, the volume reconstructed by {\texttt{recon3d.py}} with the sum of the recorded diffraction signal. 
+Script to compare, at different projections, the volume reconstructed by {\texttt{recon3d.py}} with the sum of the recorded diffraction signal.
 
-\danger Change paths in the script. 
+\danger Change paths in the script.
 
 \subsubsection{vol3D\textunderscore vtk.m}
 
@@ -367,7 +369,7 @@ The shape of the grain volume reconstructed using the Recon3D approach greatly d
 
 \begin{itemize}
     \item {\texttt{reconstr.m}}, which calls {\texttt{ART\textunderscore TV\textunderscore reconstruct\textunderscore 2d\textunderscore new.m}}, is a script to reconstruct the 3D shape of the investigated grain using a combination of {\footnotesize{ART}} and {\footnotesize{TV}}. Input: for each rotation angle, sum of all collected diffraction data (returned by the Recon3D scripts {\texttt{img\textunderscore sum.py}} and {\texttt{plot\textunderscore sum.py}}, Sec. \ref{sec:img_sum} and \ref{sub_s:plot_sum})
-    \item {\texttt{Compare\textunderscore recon3d\textunderscore ART.m}}, which 
+    \item {\texttt{Compare\textunderscore recon3d\textunderscore ART.m}}, which
     \begin{itemize}
         \item At selected rotation angles, compares the projections of the {\footnotesize{ART-TV}} and the Recon3D reconstruction with the sum of the collected diffraction data
         \item Combines information from {\footnotesize{ART-TV}} and from Recon3D in a final grain reconstruction, where the grain shape is obtained from the {\footnotesize{ART-TV}} reconstruction approach, and each voxel has orientation calculated by Recon3D
@@ -384,18 +386,18 @@ The shape of the grain volume reconstructed using the Recon3D approach greatly d
 def topotomoscan '{
 
     getinitpos
-    
+
     _omegastart = 0
     _omegaend = 180
     _omegastepsize = 0.8
     _omegasteps = (_omegaend-_omegastart)/_omegastepsize
 
     for(_omegai = 0; _omegai <= _omegasteps; _omegai += 1){
-        
+
         _omega = _omegastart + _omegai*_omegastepsize
         printf("\n OMEGA = %g\n", _omega)
         umv diffry _omega
-        
+
         _phistepsize = cos(rad(_omega))*0.032
         _chistepsize = sin(rad(_omega))/cos(rad(_zpchi))*0.032
         for(_secondi = 0; _secondi <= 6; _secondi += 1){
@@ -403,19 +405,19 @@ def topotomoscan '{
             _chi = _zpchi + (_secondi-3)*_chistepsize
             printf("\n chi = %g, phi = %g\n", _chi, _phi)
             umv chi _chi phi _phi
-            
-            zapline diffrz _zpdiffrz-3.5*0.032 _zpdiffrz+3.5*0.032 7 2000    
+
+            zapline diffrz _zpdiffrz-3.5*0.032 _zpdiffrz+3.5*0.032 7 2000
         }
 
     }
-    
-        
+
+
     movetoinit
 
 }'
 \end{lstlisting}
 
-In particular, it is important that {\texttt{\textunderscore chistepsize}} and {\texttt{\textunderscore phistepsize}} are described as above (lines 16 and 17). If data have been acquired in the opposite way 
+In particular, it is important that {\texttt{\textunderscore chistepsize}} and {\texttt{\textunderscore phistepsize}} are described as above (lines 16 and 17). If data have been acquired in the opposite way
 
 \begin{lstlisting}
         _phistepsize = sin(rad(_omega))/cos(rad(_zpphi))*0.032
@@ -445,23 +447,23 @@ As input, {\texttt{getdata.py}} loads a set of frames collected during a topotom
 \begin{itemize}
     \item $\omega$, the sample rotation angle
     \item $\mu$, the in-plane sample tilting angle
-    \item $\gamma$, the off-plane sample tilting angle perpendicular to $\mu$. The value of $\gamma$ is determined by a {\emph{pseudomotor}}, which is not a real motor but instead a combination of the motors controlling the angles $\chi$ and $\phi$ (a.k.a. $\alpha$ and $\beta$), regulated so that $\gamma$ and $\mu$ always move on two perpendicular planes. In the data acquisition script in Sec. \ref{sec:data_acquisition}, $\chi$ and $\phi$ are defined as 
-    
+    \item $\gamma$, the off-plane sample tilting angle perpendicular to $\mu$. The value of $\gamma$ is determined by a {\emph{pseudomotor}}, which is not a real motor but instead a combination of the motors controlling the angles $\chi$ and $\phi$ (a.k.a. $\alpha$ and $\beta$), regulated so that $\gamma$ and $\mu$ always move on two perpendicular planes. In the data acquisition script in Sec. \ref{sec:data_acquisition}, $\chi$ and $\phi$ are defined as
+
     \begin{eqnarray}
         \chi & = & \chi_0 + i \cdot \Delta \chi \label{eq:chi} \\
              & = & \chi_0 + i \cdot \frac{\sin\omega}{\cos\phi_0} \cdot \Delta\chi \\
-        \phi & = & \phi_0 + i \cdot \Delta \phi \label{eq:phi} \\ 
+        \phi & = & \phi_0 + i \cdot \Delta \phi \label{eq:phi} \\
              & = & \phi_0 + i \cdot \cos\omega \cdot \Delta\phi
     \end{eqnarray}
-    
-    Where $\phi_0$ and $\chi_0$ are the initial positions of the $\phi$ and $\chi$ motors, and $\Delta\phi$ $[\Delta\chi]$ is the angular step used to increment the $\phi$ $[\chi]$ position. Denoting the increment of the pseudomotor position with $\Delta\gamma$, with $\Delta\gamma = \Delta\phi = \Delta\chi$, from Eq. \ref{eq:phi} $\gamma$ can be calculated as 
- 
+
+    Where $\phi_0$ and $\chi_0$ are the initial positions of the $\phi$ and $\chi$ motors, and $\Delta\phi$ $[\Delta\chi]$ is the angular step used to increment the $\phi$ $[\chi]$ position. Denoting the increment of the pseudomotor position with $\Delta\gamma$, with $\Delta\gamma = \Delta\phi = \Delta\chi$, from Eq. \ref{eq:phi} $\gamma$ can be calculated as
+
     \begin{equation}
         \gamma = i \Delta\gamma = \frac{\phi - \phi_0}{\cos\omega}
     \end{equation}
-    
+
     To read the header of the {\texttt{.edf}} images, modules from the FabIO\cite{knudsen2013fabio} package were used.
-    
+
 \end{itemize}
 
 \subsection{Output}
@@ -496,35 +498,35 @@ These are the steps followed to clean the collected frames:
     \item For a given projection, subtract from each frame the dark current (detector readout when there is no incoming signal). The dark current frame is estimated as follows (lines 170-211 in {\texttt{getdata.py}}):
     \begin{enumerate}
         \item Calculate the integrated intensity of each frame (see Fig. \ref{fig:distr_I_int})
-        
+
         \item Select the two frames with the lower (but greater than 0) integrated intensities: $I_{min,1}$ and $I_{min,2}$. If there aren't at least two images with nonzero integrated intensity, define the dark current frame as made of zeros
-        
-        \item Calculate,pixel by pixel, the average value of $I_{min,1}$ and $I_{min,2}$: 
+
+        \item Calculate,pixel by pixel, the average value of $I_{min,1}$ and $I_{min,2}$:
         \begin{equation}
             <I_{min}(x,y)> = \frac{I_{min,1}(x,y) + I_{min,2}(x,y)}{2}
         \end{equation}
         Where the pixel by pixel operation takes into account possible spatial anisotropies
-        
+
         \item Subtract from each frame the dark current frame, $<I_{min}(x,y)>$
-        
+
         \item Set negative pixels to 0
-        
+
         \item Threshold the hot pixels
     \end{enumerate}
-    
+
     \item Normalize the recorded frames by requiring that the total integrated intensity (sum of the images collected varying $\gamma$ and $\mu$) is the same for each projection. In this way, we take into account possible
     variations of the beam power during the experiment. For a given projection, the steps are (lines 217-230 in {\texttt{getdata.py}}):
     \begin{enumerate}
         \item Sum all recorded frames
-        
+
         \item Calculate the mean pixel intensity
-        
+
         \item Normalize, pixel by pixel, each frame by dividing by the mean intensity of the relative projection, and multiplying by the mean of all the mean intensity values, each relative to a different projection (see Fig. \ref{fig:I_normalization})
             \begin{equation}
                 I_{normalized}(x,y)_{\gamma, \mu, \omega} = \frac{I(x,y)_{\gamma, \mu, \omega}}{<\sum_{\gamma, \mu} (x,y)>_{\omega}}\cdot <<\sum_{\gamma, \mu} (x,y)>_{\omega}>
             \end{equation}
     \end{enumerate}
-    
+
     If there are projections where no intensity is recorded, they should be excluded from the calculation of the mean values.
     \begin{figure}[h]
     \centering
@@ -532,52 +534,52 @@ These are the steps followed to clean the collected frames:
     \caption{Mean pixel intensity per projection before and after the normalization process included in {\texttt{getdata.py}} (Sec. \ref{subs:data_cleaning}).}
     \label{fig:I_normalization}
     \end{figure}
-    
-    \item For each frame collected at a given projection, characterize the noise distribution and subtract it from the recorded intensity (lines 233-273 in {\texttt{getdata.py}}). Goal: minimize the noise and consider possible spatial anisotropies of the detector response. 
-    
-    \danger {\emph{Wolfgang Ludwig from {\footnotesize{ESRF}} suggested that this should not be necessary if the transfocator is managed correctly}}. 
-    
+
+    \item For each frame collected at a given projection, characterize the noise distribution and subtract it from the recorded intensity (lines 233-273 in {\texttt{getdata.py}}). Goal: minimize the noise and consider possible spatial anisotropies of the detector response.
+
+    \danger {\emph{Wolfgang Ludwig from {\footnotesize{ESRF}} suggested that this should not be necessary if the transfocator is managed correctly}}.
+
     For every image collected at a given projection the steps are, as illustrated in Fig. \ref{fig:binning}:
     \begin{enumerate}
         \item Rebin the image (the size of the bins corresponds to the {\texttt{Size frame background subtraction}} given as an input to {\texttt{getdata.py}})
-        
+
         \begin{figure}[h]
         \centering
         \includegraphics[width=0.75\textwidth]{Background_characterization}
         \caption{Steps followed to clean each image from its background signal. At first, the collected frames are binned (bin size provided as {\texttt{Size frame background subtraction}} to {\texttt{getdata.py}}). The outermost bins, where no diffraction signal is expected, are used to calculate the expected background distribution for the entire image. The background is then subtracted from the image.}
         \label{fig:binning}
         \end{figure}
-        
-        \item Consider the cornice of the rebinned image (first and last column, first and last row), where normally there is no diffraction signal. 
-        
-        \danger {\emph{This should be changed in case of bad alignment}} 
-        
+
+        \item Consider the cornice of the rebinned image (first and last column, first and last row), where normally there is no diffraction signal.
+
+        \danger {\emph{This should be changed in case of bad alignment}}
+
         \item Notice that the background signal tends to progressively increase/decrease along Y
-        
+
         \item Calculate, for each pixel, the expected background signal using the intensity values of the top and bottom bin from the same column. For a pixel with coordinates $(x,y)$, $IB_{bin,min}$ and $IB_{bin, max}$ are the maximum and minimum background signal intensities, calculated considering the top and bottom bins corresponding to the $x$ column. The intensity of the background signal in a pixel located in $(x,y)$, $IB(x,y)$, is then
         \begin{equation}
             IB(x,y) = IB_{bin,min} + \frac{IB_{bin,max} - IB_{bin,min}}{sz(image) - 2\cdot sz(cornice)}\cdot(y - sz(cornice))
         \end{equation}
         Where $sz(frame)$ and $sz(cornice)$ are the size of the image (before binning) and of the cornice, respectively
-        
+
         \item Subtract the calculated background from the frame
-        
+
         \item Set all negative pixels to zero
     \end{enumerate}
-    
+
     \begin{figure}[h!]
         \centering
         \includegraphics[width=0.75\textwidth]{Morph_ops}
         \caption{The final step of the developed image processing procedure consists in localizing the diffraction spots, and setting to 0 all pixels that are not part of them. This is done by binarizing the image, performing morphological operations, selecting the larger regions and making a mask using them.}
         \label{fig:morph_ops}
     \end{figure}
-    
-    This procedure can only be performed if the collected diffraction spots always occupy a region that is well centered on the detector surface. If that is not the case, set the cornice size to 0. 
-    
+
+    This procedure can only be performed if the collected diffraction spots always occupy a region that is well centered on the detector surface. If that is not the case, set the cornice size to 0.
+
     \item Localize the regions containing the diffraction signal and set to 0 all pixels outside it (see Fig. \ref{fig:morph_ops}). Lines 272-294 in {\texttt{getdata.py}}. In detail, the steps are:
     \begin{enumerate}
         \item Threshold the input image (threshold value provided as input to {\texttt{getdata.py}}) and binarize the result
-        
+
         \item Fill the holes in the image, and perform the morphological operations of erosion and dilation \cite{image_book}. In Python, a fast and easy way to do so is to use the functions included in \href{http://scikit-image.org/}{skimage} and \href{https://docs.scipy.org/doc/scipy/reference/tutorial/ndimage.html}{ndimage}. Code snippet from {\texttt{getdata.py}}:
         \begin{verbatim}
 from skimage.morphology import disk, dilation, erosion
@@ -585,14 +587,14 @@ Cleared = ndimage.binary_fill_holes(IM_clean_bin).astype(int)
 Dilated = erosion(dilation(Cleared, disk(1)), disk(1))
 Dilated_c = ndimage.binary_fill_holes(Dilated).astype(int)
         \end{verbatim}
-        
-        \item Label the regions in the resulting binary image, and select only those with an area larger than 100 pixels. 
-        
+
+        \item Label the regions in the resulting binary image, and select only those with an area larger than 100 pixels.
+
         \danger {\emph{The minimum number of pixels required to consider a cluster as a diffraction spot depends on the noise and the signal distribution for a specific sample. A reasonable value should be determined through tests}}
-        
+
         \item Using the selected regions, mask the initial image and set all pixels outside the mask to 0
     \end{enumerate}
-    
+
 \end{enumerate}
 
 %{\texttt{getdata.py}} also returns an array containing, for each projection, the sum of all collected images. The summed images have been normalized so that they have the same summed intensity. For a given projection {\emph{i}}, the summed image was normalized pixel by pixel using the formula
@@ -604,7 +606,7 @@ Dilated_c = ndimage.binary_fill_holes(Dilated).astype(int)
 \section{recon3d.py}
 \label{sec:recon3d}
 
-The {\texttt{recon3d.py}} script reconstructs the {\footnotesize{3D}} shape and the orientation distribution of a single, deeply embedded grain from a topotomo dataset collected at {\footnotesize{ID06}}. 
+The {\texttt{recon3d.py}} script reconstructs the {\footnotesize{3D}} shape and the orientation distribution of a single, deeply embedded grain from a topotomo dataset collected at {\footnotesize{ID06}}.
 
 The script uses a forward model, which for a given voxel calculates the position of the corresponding diffraction spots on the detector surface as a function of $\omega, \gamma$ and $\mu$. For each voxel, the diffracted intensity values collected at different ($\omega, \gamma, \mu$) values are stored. The $\gamma, \mu$ combination that consistently gives the higher intensity is selected as the orientation of the voxel. The quality of the reconstruction increases with the number of available projections (see Fig. \ref{fig:recon3d_different_ranges}).
 
@@ -631,7 +633,7 @@ In other words, {\texttt{recon3d.py}} consists of a set of transformation from t
 
 \subsection{Code structure}
 
-Designed to optimize speed, {\texttt{recon3d.py}} is structured as follows: 
+Designed to optimize speed, {\texttt{recon3d.py}} is structured as follows:
 \begin{enumerate}
     \item Definition of the matrices describing the transformation from the sample reference system to the detector reference system
     \item Calculation of the transformation matrix for all possible combinations of ($\omega, \gamma, \mu$). Store the calculated matrices
@@ -654,7 +656,7 @@ With {\footnotesize{DFXRM}}, the orientation of a voxel is defined by a ($\mu, \
     \label{fig:mosaicity_map}
 \end{figure}
 
-To evaluate the accuracy of the orientation determination, the {\emph{completeness}} $C$ is considered, defined as 
+To evaluate the accuracy of the orientation determination, the {\emph{completeness}} $C$ is considered, defined as
 
 \begin{equation}
     C = \frac{\text{Number of projections where the } (\gamma, \mu) \text{ orientation is measured}}{\text{Number of considered projections}}
@@ -663,13 +665,13 @@ To evaluate the accuracy of the orientation determination, the {\emph{completene
 \section{Validation of the shape reconstruction procedure}
 \label{sec:validation}
 
-The {\footnotesize{3D}} grain shapes reconstructed by Recon3D greatly depend on the choice of the completeness value {\emph{C}}. To cross-check the validity of the Recon3D reconstruction two other reconstruction methodologies are available, based on the {\footnotesize{ASTRA}} Toolbox \cite{van2015astra, van2016fast} and on {\footnotesize{ART-TV}} \cite{laroque2008accurate}, which is a combination of the Algebraic Reconstruction Technique ({\footnotesize{ART}}) with the Total Variation ({\footnotesize{TV}}) approach. As input, both methodologies take one image per projection, obtained by summing all frames collected while varying $\mu$ and $\gamma$. 
+The {\footnotesize{3D}} grain shapes reconstructed by Recon3D greatly depend on the choice of the completeness value {\emph{C}}. To cross-check the validity of the Recon3D reconstruction two other reconstruction methodologies are available, based on the {\footnotesize{ASTRA}} Toolbox \cite{van2015astra, van2016fast} and on {\footnotesize{ART-TV}} \cite{laroque2008accurate}, which is a combination of the Algebraic Reconstruction Technique ({\footnotesize{ART}}) with the Total Variation ({\footnotesize{TV}}) approach. As input, both methodologies take one image per projection, obtained by summing all frames collected while varying $\mu$ and $\gamma$.
 
-In the following, the geometry and the reconstruction scripts of both methodologies are presented. 
+In the following, the geometry and the reconstruction scripts of both methodologies are presented.
 
 \subsection{Validation using ASTRA}
 
-The {\footnotesize{ASTRA}} toolbox \cite{van2015astra, van2016fast} is designed to operate in a {\footnotesize{CT}} scan-like geometry, where the sample is illuminated by a parallel or cone {\footnotesize{X}}-ray beam and the {\emph{transmitted signal}} is collected using a {\footnotesize{2D}} detector. This geometry is fundamentally different from the {\footnotesize{DFXRM}} one, where a {\footnotesize{2D}} detector is used to collect the {\emph{diffracted signal}}. 
+The {\footnotesize{ASTRA}} toolbox \cite{van2015astra, van2016fast} is designed to operate in a {\footnotesize{CT}} scan-like geometry, where the sample is illuminated by a parallel or cone {\footnotesize{X}}-ray beam and the {\emph{transmitted signal}} is collected using a {\footnotesize{2D}} detector. This geometry is fundamentally different from the {\footnotesize{DFXRM}} one, where a {\footnotesize{2D}} detector is used to collect the {\emph{diffracted signal}}.
 
 Reconstructing topotomography datasets, collected in diffraction, using the {\footnotesize{ASTRA}} toolbox thus requires stretching {\footnotesize{ASTRA}} beyond its standard capabilities. This can be done by considering that, for a sample illuminated by a parallel beam forming an angle $\mu$ with the horizontal axis, the diffracted signal collected at the angle $\pi - \mu$ is the negative of the transmission signal collected at $\pi + \mu$ (see Fig. \ref{fig:astra_dfxrm}).
 
@@ -692,7 +694,7 @@ With the {\footnotesize{ASTRA}} toolbox, the {\footnotesize{DFXRM}} setup can be
     \label{fig:geom_setup}
 \end{figure}
 
-Using the ``virtual detector'' approach, the detector can be translated along the ray direction, so that the detector plane goes through the origin. In this way, all components of ${\vec{d}}$ can be set to zero, since the virtual detector now spins instead of moving around in a big circle.
+Using a ``virtual detector'' approach, the detector can be translated along the ray direction, so that the detector plane goes through the origin. In this way, all components of ${\vec{d}}$ can be set to zero, since the virtual detector now spins instead of moving around in a big circle.
 
 To determine the components of ${\vec{r}}$, ${\vec{u}}$ and ${\vec{v}}$, let us first define the vectors at $\omega = 0$ (denoted as ${\vec{r_0}}$, ${\vec{u_0}}$, ${\vec{v_0}}$) and then calculate the more general case by rotating the vectors around $y_g$. ${\vec{r_0}}$ has no component in the $z_g$ direction and can be expressed as
 
@@ -705,7 +707,7 @@ To determine the components of ${\vec{r}}$, ${\vec{u}}$ and ${\vec{v}}$, let us 
 ${\vec{u_0}}$ should be along $z_r$, and have the same length of one detector pixel. Assuming that volume voxels have the same size of the detector pixels
 
 \begin{equation}
-{\vec{u_0}} = \left(\begin{matrix} 
+{\vec{u_0}} = \left(\begin{matrix}
 0\\ 0 \\ 1
 \end{matrix}\right)
 \end{equation}
@@ -734,7 +736,7 @@ Which gives $\vec{r} = R \vec{r_0}$, $\vec{u} = R \vec{u_0}$ and $\vec{v} = R \v
 
 \subsubsection{The ASTRA scripts}
 
-The scripts developed to reconstruct a topotomography dataset using the {\footnotesize{ASTRA}} toolbox are available at \url{https://github.com/albusdemens/astrarecon}. 
+The scripts developed to reconstruct a topotomography dataset using the {\footnotesize{ASTRA}} toolbox are available at \url{https://github.com/albusdemens/astrarecon}.
 
 \danger The scripts are still under development.
 
@@ -756,7 +758,7 @@ The recipe to reconstruct a {\footnotesize{3D}} grain shape is:
 
 \subsection{Validation using ART-TV}
 
-At present (Fall 2017) the best grain shape reconstructions have been obtained using the {\footnotesize{ART-TV}} approach. The starting point to define the {\footnotesize{ART-TV}} geometry is the reconstruction geometry used with the {\footnotesize{ASTRA}} toolbox (Sec. \ref{sec:astra_geom}) where, instead of the diffraction signal, the corresponding transmission signal is considered. 
+At present (November 2017) the best grain shape reconstructions have been obtained using the {\footnotesize{ART-TV}} approach. The starting point to define the {\footnotesize{ART-TV}} geometry is the reconstruction geometry used with the {\footnotesize{ASTRA}} toolbox (Sec. \ref{sec:astra_geom}) where, instead of the diffraction signal, the corresponding transmission signal is considered.
 
 The available version of the {\footnotesize{ART-TV}} algorithm only works with an incoming beam that is perpendicular to the sample rotation axis and to the detector. By reconstructing, instead of the considered sample, an approximation of it, {\footnotesize{ART-TV}} can also be applied when the incoming beam is inclined by $\mu$ with respect to the horizontal axis.
 
@@ -769,18 +771,18 @@ The available version of the {\footnotesize{ART-TV}} algorithm only works with a
     \label{fig:art_tv_geometry}
 \end{figure}
 
-The applied {\footnotesize{ART-TV}} code is designed to reconstruct {\footnotesize{3D}} shapes collected in standard parallel beam geometry, with the beam perpendicular to both the rotation axis and the detector plane. Therefore, applying {\footnotesize{ART-TV}} to the topotomo data returns an approximation of the ``real'' shape. The reconstructed shape can be estimated to be $\sim 1 - cos\theta$ wider, in the {\footnotesize{XY}} plane, than the real shape, as illustrated in Fig \ref{fig:art_tv_geometry}. 
+The applied {\footnotesize{ART-TV}} code is designed to reconstruct {\footnotesize{3D}} shapes collected in standard parallel beam geometry, with the beam perpendicular to both the rotation axis and the detector plane. Therefore, applying {\footnotesize{ART-TV}} to the topotomo data returns an approximation of the ``real'' shape. The reconstructed shape can be estimated to be $\sim 1 - cos\theta$ wider, in the {\footnotesize{XY}} plane, than the real shape, as illustrated in Fig \ref{fig:art_tv_geometry}.
 
 To derive this estimate, let us consider a photon travelling from a voxel to the grain boundary. In the real configuration, the photon path is inclined by an angle $\mu$ with respect to the horizontal axis and has length {\emph{l}}, $\Delta l$ longer that the path covered by a photon flying parallel to the {\footnotesize{X}} axis, with the same grain boundary exit point. Therefore, a rough estimate of the grain deformation due to the improper geometry definition is that the reconstructed grain is about $\Delta l$ larger on the {\footnotesize{XY}} plane than the real grain.
 
-In formulas, 
+In formulas,
 
 \begin{eqnarray}
     l - \Delta l & = & l\cdot\cos\theta \\
-    \Delta l & = & l (1 - \cos\theta) 
+    \Delta l & = & l (1 - \cos\theta)
 \end{eqnarray}
 
-For $\theta = 10.38^{\circ}$, this corresponds to an horizontal dilation of about $ 1 - \cos(10.38^{\circ}) = 1 - 0.984 = 1.6 \%$. We consider the height of the reconstructed grain to be consistent with the height of the real grain. Before comparing, at a given angle, the projection of the reconstructed volume with the sum of the collected diffraction signal, the projection was eroded to take into account possible horizontal dilations. 
+For $\theta = 10.38^{\circ}$, this corresponds to an horizontal dilation of about $ 1 - \cos(10.38^{\circ}) = 1 - 0.984 = 1.6 \%$. We consider the height of the reconstructed grain to be consistent with the height of the real grain. Before comparing, at a given angle, the projection of the reconstructed volume with the sum of the collected diffraction signal, the projection was eroded to take into account possible horizontal dilations.
 
 \subsubsection{The ART-TV scripts}
 
@@ -798,13 +800,13 @@ Using {\footnotesize{ART-TV}}, the recipe to reconstruct the grain shape is:
     \item Sum, projection by projection, all collected images, using the scripts {\texttt{getdata.py}} and {\texttt{img\textunderscore sum.py}}, included in Recon3D
     \item Reconstruct the sample using {\texttt{reconstr.m}}. The script takes as input the {\texttt{.mat}} file returned by {\texttt{img\textunderscore sum.py}}. For a comparison of the {\footnotesize{3D}} grain shape reconstructed using Recon3D and {\footnotesize{ART-TV}}, see Fig. \ref{fig:vol_ART_recon3d}
     \item Compare the volume reconstructed using {\footnotesize{ART-TV}} with the reconstruction returned by Recon3D and with the experimental data (see Fig. \ref{fig:compare_proj}). Script: {\texttt{Compare\textunderscore recon3d\textunderscore ART.m}}. The script also combines information from the Recon3D reconstruction and from the {\footnotesize{ART-TV}} one in a single volume: the shape of the volume is defined by {\texttt{ART-TV}}, and the voxels in the volume have the orientation returned by Recon3D.
-    
-    Use the {\texttt{deadTHreshparameter}} to exclude certain projections from the reconstruction. Usually, the reconstruction quality increases with the numb er of available projections. 
+
+    Use the {\texttt{deadTHreshparameter}} to exclude certain projections from the reconstruction. Usually, the reconstruction quality increases with the numb er of available projections.
 \end{enumerate}
 
 Inside the volume reconstructed combining {\footnotesize{ART-TV}} and Recon3D, the voxels have orientation defined by the $\gamma, \mu$ values assigned using Recon3D.
 
-For the selected volume, the grain orientation can be represented by rescaling the $\gamma$ and $\mu$ values to the $[0,1]$ interval, and then calculating the corresponding HSV color: 
+For the selected volume, the grain orientation can be represented by rescaling the $\gamma$ and $\mu$ values to the $[0,1]$ interval, and then calculating the corresponding HSV color:
 
 \begin{verbatim}
 
@@ -846,7 +848,7 @@ By plotting the {\footnotesize{Z}} slices of the grain volume, subgrain structur
 \subsection{Will make life easier}
 
 \begin{enumerate}
-    \item Provide paths as input in 
+    \item Provide paths as input in
     \begin{itemize}
         \item {\texttt{rebin\textunderscore img.py}}
         \item {\texttt{plot\textunderscore img.py}}
@@ -856,7 +858,7 @@ By plotting the {\footnotesize{Z}} slices of the grain volume, subgrain structur
     \item Install ParaView on Panda2, to visualize {\footnotesize{3D}} vtk files
     \item Combine {\texttt{img\textunderscore sum.py}} and {\texttt{plot\textunderscore sum.py}}
     \item {\texttt{plot\textunderscore angles.py}} should also return a sinogram of the collected data
-    \item Some of the data analysis programs are in Matlab. Having them in Pyhton instead would unify the code and make it easier to script programs 
+    \item Some of the data analysis programs are in Matlab. Having them in Pyhton instead would unify the code and make it easier to script programs
 \end{enumerate}
 
 \subsection{Would be nice to have}
@@ -870,15 +872,15 @@ By plotting the {\footnotesize{Z}} slices of the grain volume, subgrain structur
 In alphabetic order:
 \begin{itemize}
     \item Alberto Cereser, contributor 2017
-    
+
     Email: \href{alberto.cereser@gmail.com}{alberto.cereser@gmail.com}, \href{alcer@fysik.dtu.dk}{alcer@fysik.dtu.dk}
-    
+
     Recon3D repository: \href{https://github.com/albusdemens/Recon3D}{https://github.com/albusdemens/Recon3D}
 
     \item Anders Clemen Jakobsen, contributor 2016/2017
-    
+
     Email: \href{andcj@fysik.dtu.dk}{andcj@fysik.dtu.dk}
-    
+
     Recon3D repository: \href{https://github.com/acjak/Recon3D}{https://github.com/acjak/Recon3D}
 
 \end{itemize}
