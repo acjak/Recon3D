@@ -31,3 +31,7 @@ If *mpirun* is available (as on Panda2), multiple instances of getdata.py or rec
 ## How to contribute
 
 Check the wikipages on [contribution](https://github.com/albusdemens/Recon3D/wiki/How-to-contribute) and on suggested [software](https://github.com/albusdemens/Recon3D/wiki/Suggested-software-tools).
+
+## License
+
+This software is covered by the GNU General Public License.
