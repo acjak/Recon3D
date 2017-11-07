@@ -1,6 +1,10 @@
 # Recon3D
 
-*** Still a work in progress ***
+Copyright 2016-2017, All rights reserved
+
+Technical University of Denmark, Kongens Lyngby, Denmark
+
+Code written by A.C. Jakobsen, A. Cereser
 
 Recon3D is a set of algorithms developed to analyze data collected using dark field X-ray microscopy ([DFXRM](https://www.nature.com/articles/ncomms7098)). DFXRM is a non-destructive technique which allows to select a single grain embedded in a polycrystalline sample and to reconstruct, in 3D, its shape and how crystal orientations are distributed in its interior. The technique has a spatial resolution of about 100 nm and an angular resolution superior to what provided by transmission electron microscopy (TEM).
 
